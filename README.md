@@ -202,11 +202,17 @@ input { flex: 1; min-width: 120px; }
 let pair = 'BTCUSDT';
 let interval = '15m';
 let analysis = null;
-let _savedCapital = localStorage.getItem("capital");
+// Storage helpers with fallback
+const _store = {};
+function _get(key) { try { return _get(key); } catch(e) { return _store[key] || null; } }
+function _set(key, val) { try { _set(key, val); } catch(e) { _store[key] = val; } }
+function _remove(key) { try { _remove(key); } catch(e) { delete _store[key]; } }
+
+let _savedCapital = _get("capital");
 let capital = (_savedCapital !== null && _savedCapital !== undefined) ? parseFloat(_savedCapital) : 1000;
-let _savedTrade = localStorage.getItem("openTrade");
+let _savedTrade = _get("openTrade");
 let openTrade = (_savedTrade && _savedTrade !== "null") ? JSON.parse(_savedTrade) : null;
-let _savedTrades = localStorage.getItem("trades");
+let _savedTrades = _get("trades");
 let trades = (_savedTrades && _savedTrades !== "null") ? JSON.parse(_savedTrades) : [];
 let refreshTimer = null;
 const INITIAL_CAPITAL = 1000;
@@ -398,7 +404,7 @@ function openPaperTrade() {
   if (!analysis||analysis.signal==='NEUTRO'||openTrade) return;
   const size=capital*0.95;
   openTrade={id:Date.now(),pair,signal:analysis.signal,direction:analysis.direction,entry:analysis.entry,tp:analysis.tp,sl:analysis.sl,qty:size/analysis.entry,size,openTime:new Date().toLocaleTimeString('es-AR'),confidence:analysis.confidence};
-  localStorage.setItem("openTrade", JSON.stringify(openTrade));
+  _set("openTrade", JSON.stringify(openTrade));
   renderActionArea();
 }
 
@@ -409,8 +415,8 @@ function closePaperTrade(reason) {
   const pnl = openTrade.size * pricePct;
   const pnlPct = pricePct * 100;
   trades.unshift({...openTrade,exitPrice,pnl,pnlPct,closeTime:new Date().toLocaleTimeString('es-AR'),reason});
-  capital+=pnl; localStorage.setItem("capital", capital.toString()); localStorage.setItem("trades", JSON.stringify(trades)); localStorage.setItem("openTrade", null);
-  openTrade=null; localStorage.setItem("openTrade", null);
+  capital+=pnl; _set("capital", capital.toString()); _set("trades", JSON.stringify(trades)); _set("openTrade", null);
+  openTrade=null; _set("openTrade", null);
   updateCapitalDisplay();
   renderActionArea();
   renderTrades();
@@ -455,9 +461,9 @@ function renderStats() {
 }
 
 function resetDemo() {
-  capital=INITIAL_CAPITAL; localStorage.removeItem("capital"); localStorage.removeItem("trades"); localStorage.removeItem("openTrade");
+  capital=INITIAL_CAPITAL; _remove("capital"); _remove("trades"); _remove("openTrade");
   trades=[];
-  openTrade=null; localStorage.setItem("openTrade", null);
+  openTrade=null; _set("openTrade", null);
   updateCapitalDisplay();
   renderTrades();
   renderStats();
