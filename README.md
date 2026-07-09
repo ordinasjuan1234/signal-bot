@@ -202,9 +202,12 @@ input { flex: 1; min-width: 120px; }
 let pair = 'BTCUSDT';
 let interval = '15m';
 let analysis = null;
-let capital = parseFloat(localStorage.getItem("capital")) || 1000;
-let openTrade = JSON.parse(localStorage.getItem("openTrade")) || null;
-let trades = JSON.parse(localStorage.getItem("trades")) || [];
+let _savedCapital = localStorage.getItem("capital");
+let capital = (_savedCapital !== null && _savedCapital !== undefined) ? parseFloat(_savedCapital) : 1000;
+let _savedTrade = localStorage.getItem("openTrade");
+let openTrade = (_savedTrade && _savedTrade !== "null") ? JSON.parse(_savedTrade) : null;
+let _savedTrades = localStorage.getItem("trades");
+let trades = (_savedTrades && _savedTrades !== "null") ? JSON.parse(_savedTrades) : [];
 let refreshTimer = null;
 const INITIAL_CAPITAL = 1000;
 
@@ -406,7 +409,7 @@ function closePaperTrade(reason) {
   const pnl = openTrade.size * pricePct;
   const pnlPct = pricePct * 100;
   trades.unshift({...openTrade,exitPrice,pnl,pnlPct,closeTime:new Date().toLocaleTimeString('es-AR'),reason});
-  capital+=pnl; localStorage.setItem("capital", capital); localStorage.setItem("trades", JSON.stringify(trades)); localStorage.setItem("openTrade", null);
+  capital+=pnl; localStorage.setItem("capital", capital.toString()); localStorage.setItem("trades", JSON.stringify(trades)); localStorage.setItem("openTrade", null);
   openTrade=null; localStorage.setItem("openTrade", null);
   updateCapitalDisplay();
   renderActionArea();
