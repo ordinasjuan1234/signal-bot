@@ -202,12 +202,25 @@ input { flex: 1; min-width: 120px; }
 let pair = 'BTCUSDT';
 let interval = '15m';
 let analysis = null;
-// Storage helpers with fallback
-const _store = {};
-function _get(key) { try { return _get(key); } catch(e) { return _store[key] || null; } }
-function _set(key, val) { try { _set(key, val); } catch(e) { _store[key] = val; } }
-function _remove(key) { try { _remove(key); } catch(e) { delete _store[key]; } }
-
+// Storage helpers using cookies
+function _get(key) {
+  try {
+    const match = document.cookie.match(new RegExp('(?:^|; )' + key.replace(/([.*+?^=!:${}()|[\]\/\\])/g, '\\$1') + '=([^;]*)'));
+    return match ? decodeURIComponent(match[1]) : null;
+  } catch(e) { return null; }
+}
+function _set(key, val) {
+  try {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + 1);
+    document.cookie = key + '=' + encodeURIComponent(String(val)) + '; expires=' + d.toUTCString() + '; path=/; SameSite=Lax';
+  } catch(e) {}
+}
+function _remove(key) {
+  try {
+    document.cookie = key + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  } catch(e) {}
+}
 let _savedCapital = _get("capital");
 let capital = (_savedCapital !== null && _savedCapital !== undefined) ? parseFloat(_savedCapital) : 1000;
 let _savedTrade = _get("openTrade");
