@@ -1,7 +1,7 @@
-[signal-bot.html](https://github.com/user-attachments/files/29272430/signal-bot.html)[Uplo<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
+<!DOCTYPE html>
+<!-- saved from url=(0048)file:///C:/Users/ordin/Downloads/signal-bot.html -->
+<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Signal Bot</title>
 <style>
@@ -79,14 +79,14 @@ input { flex: 1; min-width: 120px; }
   </div>
   <div class="capital">
     <div class="capital-label">CAPITAL DEMO</div>
-    <div class="capital-value" id="capitalDisplay" style="color:#00ff88">$1000.00</div>
+    <div class="capital-value" id="capitalDisplay" style="color:#00ff88">$1001.48</div>
   </div>
 </div>
 
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('signal')">SEÑAL</button>
-  <button class="tab" onclick="switchTab('trades')">TRADES</button>
-  <button class="tab" onclick="switchTab('stats')">STATS</button>
+  <button class="tab active" onclick="switchTab(&#39;signal&#39;)">SEÑAL</button>
+  <button class="tab" onclick="switchTab(&#39;trades&#39;)">TRADES</button>
+  <button class="tab" onclick="switchTab(&#39;stats&#39;)">STATS</button>
 </div>
 
 <div class="content">
@@ -101,40 +101,40 @@ input { flex: 1; min-width: 120px; }
       <option value="ADAUSDT">ADA/USDT</option>
       <option value="AVAXUSDT">AVAX/USDT</option>
     </select>
-    <input id="customPair" placeholder="Otro par..." onkeydown="if(event.key==='Enter') addCustomPair()" />
+    <input id="customPair" placeholder="Otro par..." onkeydown="if(event.key===&#39;Enter&#39;) addCustomPair()">
     <button onclick="addCustomPair()" style="background:#1a1a3e;border:1px solid #3333aa;color:#8888ff;border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer">+</button>
     <div style="display:flex;gap:3px">
-      <button class="interval-btn active" onclick="setInterval2('15m',this)">15m</button>
-      <button class="interval-btn" onclick="setInterval2('1h',this)">1h</button>
-      <button class="interval-btn" onclick="setInterval2('4h',this)">4h</button>
-      <button class="interval-btn" onclick="setInterval2('1d',this)">1d</button>
+      <button class="interval-btn active" onclick="setInterval2(&#39;15m&#39;,this)">15m</button>
+      <button class="interval-btn" onclick="setInterval2(&#39;1h&#39;,this)">1h</button>
+      <button class="interval-btn" onclick="setInterval2(&#39;4h&#39;,this)">4h</button>
+      <button class="interval-btn" onclick="setInterval2(&#39;1d&#39;,this)">1d</button>
     </div>
     <button class="refresh-btn" onclick="loadData()" id="refreshBtn">↻</button>
   </div>
 
-  <div id="errorBox" style="display:none" class="error-box"></div>
+  <div id="errorBox" style="display: none;" class="error-box">⚠ Failed to fetch</div>
 
   <!-- SIGNAL TAB -->
-  <div id="tab-signal">
-    <div id="loadingMsg" class="loading">Analizando mercado...</div>
-    <div id="signalContent" style="display:none">
-      <div class="pair-label" id="pairLabel"></div>
-      <div class="price-display" id="priceDisplay"></div>
+  <div id="tab-signal" style="display: block;">
+    <div id="loadingMsg" class="loading" style="display: none;">Analizando mercado...</div>
+    <div id="signalContent" style="display: block;">
+      <div class="pair-label" id="pairLabel">BTC / USDT · 15M</div>
+      <div class="price-display" id="priceDisplay">$62.406,56</div>
 
       <div class="card" id="signalCard">
         <div class="signal-row">
-          <div class="signal-box" id="signalBox">
-            <div class="signal-icon" id="signalIcon"></div>
-            <div class="signal-text" id="signalText"></div>
+          <div class="signal-box" id="signalBox" style="border-color: rgb(255, 51, 85); background: rgb(45, 13, 13);">
+            <div class="signal-icon" id="signalIcon" style="color: rgb(255, 51, 85);">▼</div>
+            <div class="signal-text" id="signalText" style="color: rgb(255, 51, 85);">VENDER</div>
           </div>
           <div class="signal-side">
             <div class="mini-card">
               <div class="mini-label">DIRECCIÓN</div>
-              <div class="mini-value" id="directionText"></div>
+              <div class="mini-value" id="directionText" style="color: rgb(255, 51, 85);">SHORT</div>
             </div>
             <div class="mini-card">
               <div class="mini-label">CONFIANZA</div>
-              <div class="mini-value" id="confidenceText"></div>
+              <div class="mini-value" id="confidenceText" style="color: rgb(255, 51, 85);">100%</div>
             </div>
           </div>
         </div>
@@ -145,10 +145,10 @@ input { flex: 1; min-width: 120px; }
           </div>
           <div class="score-card">
             <div class="mini-label">BAJISTAS</div>
-            <div style="font-size:18px;font-weight:700;color:#ff3355" id="bearScore">0</div>
+            <div style="font-size:18px;font-weight:700;color:#ff3355" id="bearScore">4</div>
           </div>
         </div>
-        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 100%; background: rgb(255, 51, 85);"></div></div>
       </div>
 
       <div class="card">
@@ -156,42 +156,72 @@ input { flex: 1; min-width: 120px; }
         <div class="levels-grid">
           <div class="level-card" style="background:#111">
             <div class="level-label" style="color:#555">ENTRADA</div>
-            <div class="level-value" style="color:#fff" id="entryPrice"></div>
+            <div class="level-value" style="color:#fff" id="entryPrice">$62.406,56</div>
           </div>
           <div class="level-card" style="background:#0d2d1a;border:1px solid #00ff8833">
             <div class="level-label" style="color:#00ff8877">TAKE PROFIT</div>
-            <div class="level-value" style="color:#00ff88" id="tpPrice"></div>
+            <div class="level-value" style="color:#00ff88" id="tpPrice">$62.042,69</div>
           </div>
           <div class="level-card" style="background:#2d0d0d;border:1px solid #ff335533">
             <div class="level-label" style="color:#ff335577">STOP LOSS</div>
-            <div class="level-value" style="color:#ff3355" id="slPrice"></div>
+            <div class="level-value" style="color:#ff3355" id="slPrice">$62.631,47</div>
           </div>
         </div>
         <div class="rr-row">
           <span style="font-size:10px;color:#444">Ratio R/R</span>
-          <span style="font-size:11px;font-weight:700" id="rrText"></span>
+          <span style="font-size: 11px; font-weight: 700; color: rgb(0, 255, 136);" id="rrText">1 : 1.62</span>
         </div>
       </div>
 
       <div class="card">
         <div class="card-label">INDICADORES</div>
-        <div id="indicatorsList"></div>
+        <div id="indicatorsList"><div class="indicator-row"><span class="indicator-label">RSI neutro</span><span class="indicator-value" style="color:#444">42.6</span></div><div class="indicator-row"><span class="indicator-label">MACD negativo</span><span class="indicator-value" style="color:#ff3355">-48.4816</span></div><div class="indicator-row"><span class="indicator-label">Dentro de Bollinger</span><span class="indicator-value" style="color:#444">62127.84–62732.23</span></div><div class="indicator-row"><span class="indicator-label">Precio &lt; SMA20</span><span class="indicator-value" style="color:#ff3355">62430.03</span></div><div class="indicator-row"><span class="indicator-label">Precio &lt; EMA50</span><span class="indicator-value" style="color:#ff3355">62607.85</span></div><div class="indicator-row"><span class="indicator-label">Tendencia bajista SMA200</span><span class="indicator-value" style="color:#ff3355">63744.86</span></div></div>
       </div>
 
-      <div id="actionArea"></div>
+      <div id="actionArea"><button class="action-btn" onclick="openPaperTrade()" style="background:#2d0d0d;border-color:#ff3355;color:#ff3355;cursor:pointer">▶ SIMULAR VENDER (DEMO)</button></div>
     </div>
   </div>
 
   <!-- TRADES TAB -->
-  <div id="tab-trades" style="display:none">
+  <div id="tab-trades" style="display: none;">
     <div class="card-label">HISTORIAL DE OPERACIONES DEMO</div>
-    <div id="tradesList"></div>
+    <div id="tradesList"><div class="trade-item" style="border-color:#00ff8822;background:#0d0d18">
+    <div class="trade-header">
+      <span style="font-size:11px;font-weight:700;color:#ff3355">VENDER · BTC/USDT</span>
+      <span style="font-size:12px;font-weight:700;color:#00ff88">+$0.08 (+0.01%)</span>
+    </div>
+    <div class="trade-detail">$62.337,09 → $62.331,99 · TP · 04:45:17</div>
+  </div><div class="trade-item" style="border-color:#00ff8822;background:#0d0d18">
+    <div class="trade-header">
+      <span style="font-size:11px;font-weight:700;color:#ff3355">VENDER · SOL/USDT</span>
+      <span style="font-size:12px;font-weight:700;color:#00ff88">+$1.24 (+0.13%)</span>
+    </div>
+    <div class="trade-detail">$68.9900 → $68.9000 · TP · 04:09:27</div>
+  </div><div class="trade-item" style="border-color:#ff335522;background:#0d0d18">
+    <div class="trade-header">
+      <span style="font-size:11px;font-weight:700;color:#ff3355">VENDER · ETH/USDT</span>
+      <span style="font-size:12px;font-weight:700;color:#ff3355">$-0.84 (-0.09%)</span>
+    </div>
+    <div class="trade-detail">$1.655,33 → $1.656,8 · TP · 03:36:11</div>
+  </div><div class="trade-item" style="border-color:#00ff8822;background:#0d0d18">
+    <div class="trade-header">
+      <span style="font-size:11px;font-weight:700;color:#ff3355">VENDER · BTC/USDT</span>
+      <span style="font-size:12px;font-weight:700;color:#00ff88">+$0.49 (+0.05%)</span>
+    </div>
+    <div class="trade-detail">$62.333,93 → $62.302 · TP · 03:31:25</div>
+  </div><div class="trade-item" style="border-color:#00ff8822;background:#0d0d18">
+    <div class="trade-header">
+      <span style="font-size:11px;font-weight:700;color:#ff3355">VENDER · BTC/USDT</span>
+      <span style="font-size:12px;font-weight:700;color:#00ff88">+$0.52 (+0.05%)</span>
+    </div>
+    <div class="trade-detail">$62.367,99 → $62.333,93 · SL · 03:30:27</div>
+  </div></div>
   </div>
 
   <!-- STATS TAB -->
-  <div id="tab-stats" style="display:none">
+  <div id="tab-stats" style="display: none;">
     <div class="card-label" style="margin-bottom:10px">ESTADÍSTICAS DEMO</div>
-    <div class="stats-grid" id="statsGrid"></div>
+    <div class="stats-grid" id="statsGrid"><div class="stat-card"><div class="stat-label">Capital actual</div><div class="stat-value" style="color:#00ff88">$1001.48</div></div><div class="stat-card"><div class="stat-label">P&amp;L total</div><div class="stat-value" style="color:#00ff88">+$1.48</div></div><div class="stat-card"><div class="stat-label">Win rate</div><div class="stat-value" style="color:#00ff88">80%</div></div><div class="stat-card"><div class="stat-label">Operaciones</div><div class="stat-value" style="color:#8888ff">5</div></div><div class="stat-card"><div class="stat-label">Ganadas</div><div class="stat-value" style="color:#00ff88">4</div></div><div class="stat-card"><div class="stat-label">Perdidas</div><div class="stat-value" style="color:#ff3355">1</div></div></div>
     <button class="reset-btn" onclick="resetDemo()">↺ Reiniciar demo</button>
   </div>
 
@@ -494,6 +524,6 @@ setInterval(loadData, 60000);
 renderTrades();
 renderStats();
 </script>
-</body>
-</html>
-ading signal-bot.html…]()
+
+
+</body></html>
