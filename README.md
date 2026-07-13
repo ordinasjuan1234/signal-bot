@@ -56,8 +56,9 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
     <span id="modeLabel" style="font-size:9px;color:#00ff8866;border:1px solid #00ff8822;border-radius:4px;padding:1px 6px;margin-left:8px">DEMO</span>
   </div>
   <div style="text-align:right">
-    <div style="font-size:9px;color:#444">CAPITAL</div>
+    <div style="font-size:9px;color:#444" id="modeIndicator">DEMO · CAPITAL</div>
     <div style="font-size:12px;font-weight:700" id="capitalDisplay">$1000.00</div>
+    <div style="font-size:10px;font-weight:700;display:none" id="realBalanceDisplay"></div>
   </div>
 </div>
 
@@ -232,6 +233,35 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
       <div id="autoLog" style="margin-top:10px;font-size:10px;color:#444;max-height:120px;overflow-y:auto"></div>
     </div>
 
+    <div class="card" style="border-color:#ff880033">
+      <div class="card-label" style="color:#ff8800">⚡ MODO REAL — BINANCE</div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:10px;color:#555;margin-bottom:4px">API Key</div>
+        <input type="password" id="apiKeyInput" placeholder="Tu API Key de Binance" style="width:100%;margin-bottom:6px" value="">
+        <div style="font-size:10px;color:#555;margin-bottom:4px">Secret Key</div>
+        <input type="password" id="apiSecretInput" placeholder="Tu Secret Key de Binance" style="width:100%;margin-bottom:8px" value="">
+        <div style="display:flex;gap:6px">
+          <button onclick="saveApiKeys()" class="btn btn-orange" style="flex:2;padding:10px 0">💾 Guardar claves</button>
+          <button onclick="testConnection()" class="btn btn-blue" style="flex:1;padding:10px 0">🔌 Probar</button>
+        </div>
+        <div id="connectionStatus" style="margin-top:8px;font-size:10px;color:#444;text-align:center"></div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:10px;color:#555;margin-bottom:4px">% del saldo a usar por operación</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap" id="pctSelector">
+          <button class="tf-btn active" data-pct="5" onclick="selectPct(this)">5%</button>
+          <button class="tf-btn" data-pct="10" onclick="selectPct(this)">10%</button>
+          <button class="tf-btn" data-pct="25" onclick="selectPct(this)">25%</button>
+          <button class="tf-btn" data-pct="50" onclick="selectPct(this)">50%</button>
+        </div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px">
+        <input type="checkbox" id="realModeToggle" onchange="toggleRealMode()" style="accent-color:#ff8800">
+        <span style="font-size:11px;color:#ff8800;font-weight:700">ACTIVAR MODO REAL (órdenes con dinero real)</span>
+      </label>
+      <div style="font-size:9px;color:#333;line-height:1.6">⚠ Las órdenes en modo real se ejecutan inmediatamente en Binance con dinero real. Usá gestión de riesgo.</div>
+    </div>
+
     <div class="card">
       <div class="card-label">ESTADÍSTICAS HOY</div>
       <div class="grid2">
@@ -337,6 +367,39 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
 function _get(k){try{const m=document.cookie.match(new RegExp('(?:^|; )'+k+'=([^;]*)'));return m?decodeURIComponent(m[1]):null}catch(e){return null}}
 function _set(k,v){try{const d=new Date();d.setFullYear(d.getFullYear()+1);document.cookie=k+'='+encodeURIComponent(String(v))+';expires='+d.toUTCString()+';path=/;SameSite=Lax'}catch(e){}}
 function _remove(k){try{document.cookie=k+'=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;'}catch(e){}}
+
+// ── Backend ──────────────────────────────────────────────
+const BACKEND_URL = "https://trading-backend-x7dw.onrender.com";
+let apiKey = _get('apiKey') || '';
+let apiSecret = _get('apiSecret') || '';
+let realBalance = null;
+let isRealMode = false;
+
+async function backendPost(endpoint, body) {
+  const res = await fetch(BACKEND_URL + endpoint, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+async function fetchRealBalance() {
+  if (!apiKey || !apiSecret) return;
+  try {
+    const data = await backendPost('/balance', {apiKey, apiSecret});
+    if (data.usdt !== undefined) {
+      realBalance = data.usdt;
+      document.getElementById('realBalanceDisplay').textContent = '$' + realBalance.toFixed(2) + ' USDT';
+      document.getElementById('realBalanceDisplay').style.color = '#ff8800';
+    }
+  } catch(e) { console.log('Balance error:', e); }
+}
+
+async function placeRealOrder(side, quantity) {
+  if (!apiKey || !apiSecret) return {error: 'Sin claves API'};
+  return await backendPost('/order', {apiKey, apiSecret, symbol: pair, side, quantity: quantity.toString()});
+}
 
 // ── State ─────────────────────────────────────────────────
 let pair='BTCUSDT';
@@ -537,6 +600,18 @@ function renderActionArea(){
   const el=document.getElementById('actionArea');
   if(!openTrade){
     const disabled=a.signal==='NEUTRO';
+    if (isRealMode) {
+      el.innerHTML=`<div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          ${[5,10,25,50].map(p=>`<button onclick="selectedPct=${p}" style="flex:1;padding:6px 0;background:${selectedPct===p?'#1f1000':'#111'};border:1px solid ${selectedPct===p?'#ff8800':'#2a2a3e'};color:${selectedPct===p?'#ff8800':'#444'};border-radius:6px;font-size:10px;cursor:pointer">${p}%</button>`).join('')}
+        </div>
+        <button onclick="executeRealOrder()" ${disabled?'disabled':''} style="width:100%;padding:12px 0;font-size:12px;letter-spacing:2px;background:${disabled?'#111':a.signal==='COMPRAR'?'#0d2d1a':'#2d0d0d'};border:1px solid ${disabled?'#222':sc};color:${disabled?'#333':sc};border-radius:10px;cursor:${disabled?'not-allowed':'pointer'};font-weight:700">
+          ${disabled?'SIN SEÑAL ACTIVA':'⚡ EJECUTAR '+a.signal+' REAL'}
+        </button>
+        <div style="font-size:9px;color:#333;text-align:center;margin-top:4px">Orden MARKET · Dinero real · Sin garantía de precio exacto</div>
+      </div>`;
+      return;
+    }
     el.innerHTML=`<button class="btn" onclick="openPaperTrade()" ${disabled?'disabled':''} style="width:100%;padding:12px 0;font-size:12px;letter-spacing:2px;background:${disabled?'#111':a.signal==='COMPRAR'?'#0d2d1a':'#2d0d0d'};border-color:${disabled?'#222':sc};color:${disabled?'#333':sc};cursor:${disabled?'not-allowed':'pointer'}">${disabled?'SIN SEÑAL ACTIVA':'▶ SIMULAR '+a.signal+' (DEMO)'}</button>`;
   }else{
     const pricePct=openTrade.signal==='COMPRAR'?(a.price-openTrade.entry)/openTrade.entry:(openTrade.entry-a.price)/openTrade.entry;
@@ -825,6 +900,90 @@ function resetAll(){
   capital=INITIAL_CAPITAL;trades=[];openTrade=null;dailyPnl=0;dailyTrades=0;consecutiveLosses=0;
   _remove('capital');_remove('trades');_remove('openTrade');_remove('dailyPnl');_remove('dailyTrades');
   updateCapitalDisplay();renderTrades();renderStats();renderActionArea();updateAutoStats();stopAuto();
+}
+
+// ── Real Mode Functions ──────────────────────────────────
+let selectedPct = 5;
+
+function selectPct(btn) {
+  document.querySelectorAll('#pctSelector .tf-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedPct = parseInt(btn.dataset.pct);
+}
+
+function saveApiKeys() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  const secret = document.getElementById('apiSecretInput').value.trim();
+  if (!key || !secret) { document.getElementById('connectionStatus').textContent = '⚠ Ingresá ambas claves'; return; }
+  apiKey = key; apiSecret = secret;
+  _set('apiKey', key); _set('apiSecret', secret);
+  document.getElementById('apiKeyInput').value = '';
+  document.getElementById('apiSecretInput').value = '';
+  document.getElementById('connectionStatus').textContent = '✓ Claves guardadas';
+  testConnection();
+}
+
+async function testConnection() {
+  if (!apiKey || !apiSecret) { document.getElementById('connectionStatus').textContent = '⚠ Primero guardá las claves'; return; }
+  document.getElementById('connectionStatus').textContent = '🔄 Probando conexión...';
+  document.getElementById('connectionStatus').style.color = '#888';
+  try {
+    const data = await backendPost('/balance', {apiKey, apiSecret});
+    if (data.usdt !== undefined) {
+      realBalance = data.usdt;
+      document.getElementById('connectionStatus').textContent = '✅ Conectado — Saldo: $' + data.usdt.toFixed(2) + ' USDT';
+      document.getElementById('connectionStatus').style.color = '#00ff88';
+      document.getElementById('realBalanceDisplay').textContent = '$' + data.usdt.toFixed(2) + ' USDT';
+      document.getElementById('realBalanceDisplay').style.display = 'block';
+    } else {
+      document.getElementById('connectionStatus').textContent = '✗ Error: ' + (data.error || 'Clave inválida');
+      document.getElementById('connectionStatus').style.color = '#ff3355';
+    }
+  } catch(e) {
+    document.getElementById('connectionStatus').textContent = '✗ Sin conexión al backend';
+    document.getElementById('connectionStatus').style.color = '#ff3355';
+  }
+}
+
+function toggleRealMode() {
+  isRealMode = document.getElementById('realModeToggle').checked;
+  const dot = document.getElementById('modeDot');
+  const label = document.getElementById('modeLabel');
+  const indicator = document.getElementById('modeIndicator');
+  if (isRealMode) {
+    if (!apiKey || !apiSecret) { 
+      document.getElementById('realModeToggle').checked = false;
+      isRealMode = false;
+      alert('Primero guardá tus claves de Binance');
+      return;
+    }
+    dot.style.background = '#ff8800'; dot.style.boxShadow = '0 0 8px #ff8800';
+    label.textContent = 'REAL'; label.style.color = '#ff8800'; label.style.borderColor = '#ff880044';
+    indicator.textContent = 'REAL · SALDO BINANCE';
+    fetchRealBalance();
+  } else {
+    dot.style.background = '#00ff88'; dot.style.boxShadow = '0 0 8px #00ff88';
+    label.textContent = 'DEMO'; label.style.color = '#00ff8866'; label.style.borderColor = '#00ff8822';
+    indicator.textContent = 'DEMO · CAPITAL';
+    document.getElementById('realBalanceDisplay').style.display = 'none';
+  }
+}
+
+async function executeRealOrder() {
+  if (!analysis || analysis.signal === 'NEUTRO') return;
+  if (!apiKey || !apiSecret) { alert('Configurá las claves de Binance primero'); return; }
+  if (!realBalance) { await fetchRealBalance(); }
+  const side = analysis.signal === 'COMPRAR' ? 'BUY' : 'SELL';
+  const budget = realBalance * selectedPct / 100;
+  const qty = (budget / analysis.price).toFixed(5);
+  if (!confirm(`⚠ ORDEN REAL\n${side} ${qty} ${pair.replace('USDT','')}\nPrecio: ~$${analysis.price}\nValor: ~$${budget.toFixed(2)} USDT\n\n¿Confirmar?`)) return;
+  const result = await placeRealOrder(side, qty);
+  if (result.success) {
+    alert(`✅ Orden ejecutada\nID: ${result.orderId}\nCantidad: ${result.executedQty}`);
+    fetchRealBalance();
+  } else {
+    alert(`✗ Error: ${result.error}`);
+  }
 }
 
 // ── Init ──────────────────────────────────────────────────
