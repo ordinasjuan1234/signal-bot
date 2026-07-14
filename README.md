@@ -684,7 +684,10 @@ function renderTrades(){
   if(trades.length===0){el.innerHTML='<div style="text-align:center;padding:30px;color:#333"><div style="font-size:24px;margin-bottom:8px">📋</div><div style="font-size:11px">Sin operaciones aún</div></div>';return}
   el.innerHTML=trades.map(t=>`<div class="trade-item" style="border-color:${t.pnl>=0?'#00ff8822':'#ff335522'};background:#0d0d18">
     <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-      <span style="font-size:10px;font-weight:700;color:${t.signal==='COMPRAR'?'#00ff88':'#ff3355'}">${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf||'?'}</span>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:10px;font-weight:700;color:${t.signal==='COMPRAR'?'#00ff88':'#ff3355'}">${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf||'?'}</span>
+        <span style="font-size:9px;padding:2px 5px;border-radius:4px;background:${t.auto?'#1a1a3e':'#1a2a1a'};color:${t.auto?'#8888ff':'#00ff88'}">${t.auto?'🤖 AUTO':'👤 MANUAL'}</span>
+      </div>
       <span style="font-size:11px;font-weight:700;color:${t.pnl>=0?'#00ff88':'#ff3355'}">${t.pnl>=0?'+':''}$${t.pnl.toFixed(2)} (${t.pnlPct>=0?'+':''}${t.pnlPct.toFixed(2)}%)</span>
     </div>
     <div style="font-size:9px;color:#333">$${fp(t.entry)} → $${fp(t.exitPrice)} · ${t.reason} · ${t.openTime} · Conf ${t.confidence}%</div>
