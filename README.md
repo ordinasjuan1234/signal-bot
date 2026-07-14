@@ -241,6 +241,12 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
         <button onclick="toggleAuto()" id="autoBtn" class="btn btn-blue" style="flex:2;padding:12px 0;font-size:12px">▶ ACTIVAR AUTO</button>
         <button onclick="stopAuto()" class="btn btn-gray" style="flex:1;padding:12px 0">■ STOP</button>
       </div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:8px">
+        <span style="font-size:10px;color:#555">Resumen diario a las</span>
+        <input type="number" id="summaryHour" value="22" min="0" max="23" style="width:50px;text-align:center">
+        <span style="font-size:10px;color:#555">hs</span>
+        <button onclick="scheduleDailySummary(parseInt(document.getElementById('summaryHour').value));sendDailySummary()" class="btn btn-blue" style="padding:4px 10px;font-size:10px">📤 Probar ahora</button>
+      </div>
       <div id="autoLog" style="margin-top:10px;font-size:10px;color:#444;max-height:120px;overflow-y:auto"></div>
     </div>
 
@@ -1095,12 +1101,47 @@ async function executeRealOrder() {
   }
 }
 
+// ── Daily Summary ────────────────────────────────────────
+function sendDailySummary(){
+  const wins=trades.filter(t=>t.pnl>0).length;
+  const losses=trades.filter(t=>t.pnl<0).length;
+  const winRate=trades.length>0?Math.round(wins/trades.length*100):0;
+  const msg=`📊 RESUMEN DIARIO\n` +
+    `📅 ${new Date().toLocaleDateString('es-AR')}\n\n` +
+    `💰 Capital: $${capital.toFixed(2)}\n` +
+    `📈 P&L hoy: ${dailyPnl>=0?'+':''}$${dailyPnl.toFixed(2)}\n` +
+    `🎯 Operaciones: ${dailyTrades}\n` +
+    `✅ Ganadas: ${wins}\n` +
+    `❌ Perdidas: ${losses}\n` +
+    `📊 Win Rate: ${winRate}%\n\n` +
+    `${dailyPnl>=0?'🟢 Buen día de trading!':'🔴 Día difícil, mañana será mejor.'}`;
+  fetch(BACKEND_URL+'/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})}).catch(()=>{});
+  // Reset daily stats
+  dailyPnl=0;dailyTrades=0;
+  _set('dailyPnl','0');_set('dailyTrades','0');
+  updateAutoStats();
+}
+
+function scheduleDailySummary(hour=22){
+  const now=new Date();
+  const next=new Date();
+  next.setHours(hour,0,0,0);
+  if(next<=now)next.setDate(next.getDate()+1);
+  const ms=next-now;
+  setTimeout(()=>{
+    sendDailySummary();
+    setInterval(sendDailySummary,24*60*60*1000);
+  },ms);
+  console.log(`Resumen diario programado para las ${hour}:00`);
+}
+
 // ── Init ──────────────────────────────────────────────────
 updateCapitalDisplay();
 calcRisk();
 updateAutoStats();
 loadAllTimeframes();
 setInterval(loadData,60000);
+scheduleDailySummary(22);
 </script>
 </body>
 </html>
