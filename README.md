@@ -212,6 +212,16 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
         </div>
       </div>
       <div style="margin-bottom:10px">
+        <div style="font-size:10px;color:#555;margin-bottom:4px">Pares a monitorear</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap" id="autoPairSelector">
+          <button class="tf-btn active" data-pair="BTCUSDT" onclick="toggleAutoPair(this)">BTC</button>
+          <button class="tf-btn" data-pair="ETHUSDT" onclick="toggleAutoPair(this)">ETH</button>
+          <button class="tf-btn" data-pair="SOLUSDT" onclick="toggleAutoPair(this)">SOL</button>
+          <button class="tf-btn" data-pair="BNBUSDT" onclick="toggleAutoPair(this)">BNB</button>
+          <button class="tf-btn" data-pair="XRPUSDT" onclick="toggleAutoPair(this)">XRP</button>
+        </div>
+      </div>
+      <div style="margin-bottom:10px">
         <div style="font-size:10px;color:#555;margin-bottom:4px">Timeframes a monitorear</div>
         <div style="display:flex;gap:4px;flex-wrap:wrap" id="autoTFSelector">
           <button class="tf-btn active" data-tf="15m" onclick="toggleAutoTF(this)">15m</button>
@@ -420,6 +430,7 @@ let mtfData={};
 let autoMode=false;
 let autoTimer=null;
 let autoTFs=['15m','1h'];
+let autoPairs=['BTCUSDT'];
 let dailyPnl=parseFloat(_get('dailyPnl'))||0;
 let dailyTrades=parseInt(_get('dailyTrades'))||0;
 let consecutiveLosses=0;
@@ -753,6 +764,13 @@ function renderStats(){
 }
 
 // ── Auto Trading ──────────────────────────────────────────
+function toggleAutoPair(btn){
+  btn.classList.toggle('active');
+  const p=btn.dataset.pair;
+  if(btn.classList.contains('active')){if(!autoPairs.includes(p))autoPairs.push(p)}
+  else{autoPairs=autoPairs.filter(x=>x!==p)}
+}
+
 function toggleAutoTF(btn){btn.classList.toggle('active');const tf=btn.dataset.tf;if(btn.classList.contains('active')){if(!autoTFs.includes(tf))autoTFs.push(tf)}else{autoTFs=autoTFs.filter(t=>t!==tf)}}
 
 function toggleAuto(){
@@ -783,36 +801,59 @@ async function runAutoCheck(){
   const maxLoss=capital*(parseFloat(document.getElementById('maxDailyLoss').value)||3)/100;
   const minConf=parseInt(document.getElementById('minConfidence').value)||70;
   const requireMTF=document.getElementById('requireMTF').checked;
-  // Check daily limits
   if(dailyPnl>=maxGain){addAutoLog(`✅ Límite de ganancia alcanzado ($${dailyPnl.toFixed(2)})`);stopAuto();return}
   if(dailyPnl<=-maxLoss){addAutoLog(`🛑 Límite de pérdida alcanzado ($${dailyPnl.toFixed(2)})`);stopAuto();return}
-  // Analyze each TF
-  let signals=[];
-  for(const tf of autoTFs){
-    try{
-      const{closes,highs,lows}=await fetchKlines(pair,tf,100);
-      const a=analyze(closes,highs,lows);
-      if(a)signals.push({tf,signal:a.signal,confidence:a.confidence,analysis:a});
-      addAutoLog(`📊 ${tf.toUpperCase()}: ${a?.signal||'?'} (${a?.confidence||0}%)`);
-    }catch(e){}
+  
+  // Analyze all pairs and timeframes
+  let allSignals=[];
+  const pairsToCheck = autoPairs.length > 0 ? autoPairs : ['BTCUSDT'];
+  
+  for(const p of pairsToCheck){
+    let signals=[];
+    for(const tf of autoTFs){
+      try{
+        const{closes,highs,lows}=await fetchKlines(p,tf,100);
+        const a=analyze(closes,highs,lows);
+        if(a)signals.push({tf,pair:p,signal:a.signal,confidence:a.confidence,analysis:a});
+        addAutoLog(`📊 ${p.replace('USDT','')} ${tf.toUpperCase()}: ${a?.signal||'?'} (${a?.confidence||0}%)`);
+      }catch(e){}
+    }
+    // Check consensus for this pair
+    const buys=signals.filter(s=>s.signal==='COMPRAR'&&s.confidence>=minConf);
+    const sells=signals.filter(s=>s.signal==='VENDER'&&s.confidence>=minConf);
+    const threshold=requireMTF?2:1;
+    if(buys.length>=threshold){
+      const best=buys.sort((a,b)=>b.confidence-a.confidence)[0];
+      allSignals.push({...best,direction:'COMPRAR',score:buys.length*best.confidence});
+    }else if(sells.length>=threshold){
+      const best=sells.sort((a,b)=>b.confidence-a.confidence)[0];
+      allSignals.push({...best,direction:'VENDER',score:sells.length*best.confidence});
+    }
   }
+  
+  // Pick the best signal across all pairs
+  let signals = allSignals;
   // Check consensus
   const buySignals=signals.filter(s=>s.signal==='COMPRAR'&&s.confidence>=minConf);
   const sellSignals=signals.filter(s=>s.signal==='VENDER'&&s.confidence>=minConf);
   const threshold=requireMTF?2:1;
   if(!openTrade){
-    if(buySignals.length>=threshold){
-      const best=buySignals.sort((a,b)=>b.confidence-a.confidence)[0];
-      analysis=best.analysis;currentTF=best.tf;
+    const buySignals=allSignals.filter(s=>s.direction==='COMPRAR');
+    const sellSignals=allSignals.filter(s=>s.direction==='VENDER');
+    if(buySignals.length>0){
+      const best=buySignals.sort((a,b)=>b.score-a.score)[0];
+      analysis=best.analysis;currentTF=best.tf;pair=best.pair;
+      document.getElementById('pairSelect').value=best.pair;
       openPaperTrade();
-      addAutoLog(`🟢 COMPRA automática ${pair} · TF:${best.tf} · Conf:${best.confidence}%`);
-    }else if(sellSignals.length>=threshold){
-      const best=sellSignals.sort((a,b)=>b.confidence-a.confidence)[0];
-      analysis=best.analysis;currentTF=best.tf;
+      addAutoLog(`🟢 COMPRA automática ${best.pair.replace('USDT','')} · TF:${best.tf} · Conf:${best.confidence}%`);
+    }else if(sellSignals.length>0){
+      const best=sellSignals.sort((a,b)=>b.score-a.score)[0];
+      analysis=best.analysis;currentTF=best.tf;pair=best.pair;
+      document.getElementById('pairSelect').value=best.pair;
       openPaperTrade();
-      addAutoLog(`🔴 VENTA automática ${pair} · TF:${best.tf} · Conf:${best.confidence}%`);
+      addAutoLog(`🔴 VENTA automática ${best.pair.replace('USDT','')} · TF:${best.tf} · Conf:${best.confidence}%`);
     }else{
-      addAutoLog(`⏳ Sin señal suficiente — esperando...`);
+      addAutoLog(`⏳ Sin señal en ${pairsToCheck.map(p=>p.replace('USDT','')).join(', ')} — esperando...`);
     }
   }else{
     // Check if should close
