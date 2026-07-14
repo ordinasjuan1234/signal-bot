@@ -638,7 +638,7 @@ function renderActionArea(){
 function openPaperTrade(){
   if(!analysis||analysis.signal==='NEUTRO'||openTrade)return;
   const size=capital*0.95;
-  openTrade={id:Date.now(),pair,signal:analysis.signal,direction:analysis.direction,entry:analysis.entry,tp:analysis.tp,sl:analysis.sl,qty:size/analysis.entry,size,tf:currentTF,openTime:new Date().toLocaleTimeString('es-AR'),confidence:analysis.confidence};
+  openTrade={id:Date.now(),pair,signal:analysis.signal,direction:analysis.direction,entry:analysis.entry,tp:analysis.tp,sl:analysis.sl,qty:size/analysis.entry,size,tf:currentTF,openTime:new Date().toLocaleTimeString('es-AR'),confidence:analysis.confidence,auto:autoMode};
   _set('openTrade',JSON.stringify(openTrade));
   renderActionArea();
 }
@@ -854,11 +854,41 @@ function calcPositionSize(){
 
 // ── Export ────────────────────────────────────────────────
 function exportTrades(){
-  const csv='Par,Señal,TF,Entrada,Salida,PnL,PnL%,Razón,Apertura,Cierre\n'+
-    trades.map(t=>`${t.pair},${t.signal},${t.tf||'?'},${t.entry},${t.exitPrice},${t.pnl.toFixed(2)},${t.pnlPct.toFixed(2)},${t.reason},${t.openTime},${t.closeTime}`).join('\n');
-  const blob=new Blob([csv],{type:'text/csv'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download='trades.csv';a.click();
+  const fecha = new Date().toLocaleDateString('es-AR').replace(/\//g,'-');
+  const headers = ['Fecha','Hora Apertura','Hora Cierre','Par','Señal','Dirección','Timeframe','Confianza %','Entrada USD','Salida USD','Stop Loss','Take Profit','PnL USD','PnL %','Razón Cierre','Tipo','Capital Antes','Capital Después'];
+  let capitalAcum = 1000;
+  const rows = [...trades].reverse().map(t => {
+    const capAntes = capitalAcum;
+    capitalAcum += t.pnl;
+    return [
+      fecha,
+      t.openTime||'',
+      t.closeTime||'',
+      t.pair||'',
+      t.signal||'',
+      t.direction||'',
+      t.tf||'?',
+      t.confidence||'',
+      t.entry?.toFixed(4)||'',
+      t.exitPrice?.toFixed(4)||'',
+      t.sl?.toFixed(4)||'',
+      t.tp?.toFixed(4)||'',
+      t.pnl?.toFixed(2)||'',
+      t.pnlPct?.toFixed(2)||'',
+      t.reason||'',
+      t.auto?'AUTO':'MANUAL',
+      capAntes.toFixed(2),
+      capitalAcum.toFixed(2)
+    ].join(',');
+  });
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `trades_${fecha}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 // ── Auto Check for SL/TP ─────────────────────────────────
