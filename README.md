@@ -801,8 +801,16 @@ async function runAutoCheck(){
   const maxLoss=capital*(parseFloat(document.getElementById('maxDailyLoss').value)||3)/100;
   const minConf=parseInt(document.getElementById('minConfidence').value)||70;
   const requireMTF=document.getElementById('requireMTF').checked;
-  if(dailyPnl>=maxGain){addAutoLog(`✅ Límite de ganancia alcanzado ($${dailyPnl.toFixed(2)})`);stopAuto();return}
-  if(dailyPnl<=-maxLoss){addAutoLog(`🛑 Límite de pérdida alcanzado ($${dailyPnl.toFixed(2)})`);stopAuto();return}
+  if(dailyPnl>=maxGain){
+    const msg=`✅ LÍMITE DE GANANCIA ALCANZADO\n💰 Ganancia del día: +$${dailyPnl.toFixed(2)}\n🛑 Bot detenido automáticamente`;
+    addAutoLog(`✅ Límite de ganancia alcanzado ($${dailyPnl.toFixed(2)})`);
+    fetch('${BACKEND_URL}/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})}).catch(()=>{});
+    stopAuto();return}
+  if(dailyPnl<=-maxLoss){
+    const msg=`🛑 LÍMITE DE PÉRDIDA ALCANZADO\n📉 Pérdida del día: $${dailyPnl.toFixed(2)}\n🔒 Bot detenido para proteger tu capital`;
+    addAutoLog(`🛑 Límite de pérdida alcanzado ($${dailyPnl.toFixed(2)})`);
+    fetch(BACKEND_URL+'/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})}).catch(()=>{});
+    stopAuto();return}
   
   // Analyze all pairs and timeframes
   let allSignals=[];
@@ -846,12 +854,14 @@ async function runAutoCheck(){
       document.getElementById('pairSelect').value=best.pair;
       openPaperTrade();
       addAutoLog(`🟢 COMPRA automática ${best.pair.replace('USDT','')} · TF:${best.tf} · Conf:${best.confidence}%`);
+      fetch(BACKEND_URL+'/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`🟢 COMPRA AUTO\n📊 ${best.pair.replace('USDT','/USDT')}\n⏱ TF: ${best.tf}\n🎯 Confianza: ${best.confidence}%\n💵 Entrada: $${best.analysis.price?.toFixed(2)||'?'}`})}).catch(()=>{});
     }else if(sellSignals.length>0){
       const best=sellSignals.sort((a,b)=>b.score-a.score)[0];
       analysis=best.analysis;currentTF=best.tf;pair=best.pair;
       document.getElementById('pairSelect').value=best.pair;
       openPaperTrade();
       addAutoLog(`🔴 VENTA automática ${best.pair.replace('USDT','')} · TF:${best.tf} · Conf:${best.confidence}%`);
+      fetch(BACKEND_URL+'/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`🔴 VENTA AUTO\n📊 ${best.pair.replace('USDT','/USDT')}\n⏱ TF: ${best.tf}\n🎯 Confianza: ${best.confidence}%\n💵 Entrada: $${best.analysis.price?.toFixed(2)||'?'}`})}).catch(()=>{});
     }else{
       addAutoLog(`⏳ Sin señal en ${pairsToCheck.map(p=>p.replace('USDT','')).join(', ')} — esperando...`);
     }
