@@ -593,6 +593,7 @@ function renderSignal(){
     const newSig=a.signal+'_'+a.confidence;
     if(lastSig!==newSig&&!autoMode){
       _set(sigKey,newSig);
+      playAlert('signal');
       const emoji=a.signal==='COMPRAR'?'🟢':'🔴';
       const msg=`${emoji} SEÑAL FUERTE DETECTADA\n📊 ${pair.replace('USDT','/USDT')} · ${currentTF.toUpperCase()}\n📈 ${a.signal} · ${a.direction}\n🎯 Confianza: ${a.confidence}%\n💵 Precio: $${fp(a.price)}\n🎯 TP: $${fp(a.tp)}\n🛑 SL: $${fp(a.sl)}\n⚠️ Solo informativo — no es consejo financiero`;
       fetch(BACKEND_URL+'/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})}).catch(()=>{});
@@ -891,9 +892,11 @@ async function runAutoCheck(){
       const currentPrice=closes[closes.length-1];
       if(openTrade.signal==='COMPRAR'&&currentPrice>=openTrade.tp){
         analysis={...analysis,price:currentPrice};closePaperTrade('TP Auto');
+        playAlert('tp');
         addAutoLog(`✅ TP alcanzado automáticamente`);
       }else if(openTrade.signal==='COMPRAR'&&currentPrice<=openTrade.sl){
         analysis={...analysis,price:currentPrice};closePaperTrade('SL Auto');
+        playAlert('sl');
         addAutoLog(`🛑 SL alcanzado automáticamente`);
       }else if(openTrade.signal==='VENDER'&&currentPrice<=openTrade.tp){
         analysis={...analysis,price:currentPrice};closePaperTrade('TP Auto');
@@ -1154,6 +1157,37 @@ function scheduleDailySummary(hour=22){
     setInterval(sendDailySummary,24*60*60*1000);
   },ms);
   console.log(`Resumen diario programado para las ${hour}:00`);
+}
+
+// ── Sound Alert ──────────────────────────────────────────
+function playAlert(type='signal'){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    if(type==='signal'){
+      osc.frequency.setValueAtTime(880,ctx.currentTime);
+      osc.frequency.setValueAtTime(1100,ctx.currentTime+0.1);
+      osc.frequency.setValueAtTime(880,ctx.currentTime+0.2);
+      gain.gain.setValueAtTime(0.3,ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.4);
+      osc.start(ctx.currentTime);osc.stop(ctx.currentTime+0.4);
+    }else if(type==='tp'){
+      osc.frequency.setValueAtTime(523,ctx.currentTime);
+      osc.frequency.setValueAtTime(659,ctx.currentTime+0.15);
+      osc.frequency.setValueAtTime(784,ctx.currentTime+0.3);
+      gain.gain.setValueAtTime(0.3,ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.5);
+      osc.start(ctx.currentTime);osc.stop(ctx.currentTime+0.5);
+    }else if(type==='sl'){
+      osc.frequency.setValueAtTime(400,ctx.currentTime);
+      osc.frequency.setValueAtTime(300,ctx.currentTime+0.2);
+      gain.gain.setValueAtTime(0.3,ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.4);
+      osc.start(ctx.currentTime);osc.stop(ctx.currentTime+0.4);
+    }
+  }catch(e){}
 }
 
 // ── Init ──────────────────────────────────────────────────
