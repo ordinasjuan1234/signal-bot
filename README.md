@@ -1103,18 +1103,26 @@ async function executeRealOrder() {
 
 // ── Daily Summary ────────────────────────────────────────
 function sendDailySummary(){
+  const todayTrades=trades.filter(t=>t.closeTime&&new Date().toLocaleDateString('es-AR')===new Date().toLocaleDateString('es-AR'));
   const wins=trades.filter(t=>t.pnl>0).length;
   const losses=trades.filter(t=>t.pnl<0).length;
   const winRate=trades.length>0?Math.round(wins/trades.length*100):0;
+  const capActual=parseFloat(_get('capital'))||1000;
+  let motivacion='';
+  if(dailyPnl>0&&winRate>=60)motivacion='🚀 Excelente día! Seguí así, campeón!';
+  else if(dailyPnl>0)motivacion='🟢 Buen día! De a poco se llega lejos.';
+  else if(dailyPnl<0&&losses>=3)motivacion='💪 Dale vos podés! Mañana es otro día.';
+  else if(dailyPnl<0)motivacion='🔴 Día difícil. Revisá las señales y descansá.';
+  else motivacion='⚪ Día tranquilo. El mercado espera su momento.';
   const msg=`📊 RESUMEN DIARIO\n` +
     `📅 ${new Date().toLocaleDateString('es-AR')}\n\n` +
-    `💰 Capital: $${capital.toFixed(2)}\n` +
+    `💰 Capital actual: $${capActual.toFixed(2)}\n` +
     `📈 P&L hoy: ${dailyPnl>=0?'+':''}$${dailyPnl.toFixed(2)}\n` +
-    `🎯 Operaciones: ${dailyTrades}\n` +
+    `🎯 Operaciones hoy: ${dailyTrades}\n` +
     `✅ Ganadas: ${wins}\n` +
     `❌ Perdidas: ${losses}\n` +
     `📊 Win Rate: ${winRate}%\n\n` +
-    `${dailyPnl>=0?'🟢 Buen día de trading!':'🔴 Día difícil, mañana será mejor.'}`;
+    motivacion;
   fetch(BACKEND_URL+'/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})}).catch(()=>{});
   // Reset daily stats
   dailyPnl=0;dailyTrades=0;
