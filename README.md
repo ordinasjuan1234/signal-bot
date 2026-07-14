@@ -587,7 +587,20 @@ function renderSignal(){
   if(a.signal!=='NEUTRO'&&a.confidence>=70){
     ab.style.display='block';ab.style.background=a.signal==='COMPRAR'?'#0d2d1a':'#2d0d0d';ab.style.borderColor=sc;ab.style.color=sc;
     ab.textContent=`🔔 SEÑAL FUERTE: ${a.signal} ${pair.replace('USDT','/USDT')} — Confianza ${a.confidence}% — TF: ${currentTF.toUpperCase()}`;
-  }else{ab.style.display='none'}
+    // Send Telegram alert if signal changed
+    const sigKey='lastSig_'+pair+'_'+currentTF;
+    const lastSig=_get(sigKey)||'';
+    const newSig=a.signal+'_'+a.confidence;
+    if(lastSig!==newSig&&!autoMode){
+      _set(sigKey,newSig);
+      const emoji=a.signal==='COMPRAR'?'🟢':'🔴';
+      const msg=`${emoji} SEÑAL FUERTE DETECTADA\n📊 ${pair.replace('USDT','/USDT')} · ${currentTF.toUpperCase()}\n📈 ${a.signal} · ${a.direction}\n🎯 Confianza: ${a.confidence}%\n💵 Precio: $${fp(a.price)}\n🎯 TP: $${fp(a.tp)}\n🛑 SL: $${fp(a.sl)}\n⚠️ Solo informativo — no es consejo financiero`;
+      fetch(BACKEND_URL+'/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})}).catch(()=>{});
+    }
+  }else{
+    ab.style.display='none';
+    _set('lastSig_'+pair+'_'+currentTF,'');
+  }
   renderActionArea();
   renderMTF();
 }
