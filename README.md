@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Signal Bot Pro</title>
 <style>
@@ -854,43 +855,36 @@ function calcPositionSize(){
 
 // ── Export ────────────────────────────────────────────────
 function exportTrades(){
-  const fecha = new Date().toLocaleDateString('es-AR').replace(/\//g,'-');
-  const headers = ['Fecha','Hora Apertura','Hora Cierre','Par','Señal','Dirección','Timeframe','Confianza %','Entrada USD','Salida USD','Stop Loss','Take Profit','PnL USD','PnL %','Razón Cierre','Tipo','Capital Antes','Capital Después'];
-  let capitalAcum = 1000;
-  const rows = [...trades].reverse().map(t => {
-    const capAntes = capitalAcum;
-    capitalAcum += t.pnl;
-    return [
-      fecha,
-      t.openTime||'',
-      t.closeTime||'',
-      t.pair||'',
-      t.signal||'',
-      t.direction||'',
-      t.tf||'?',
-      t.confidence||'',
-      t.entry?.toFixed(4)||'',
-      t.exitPrice?.toFixed(4)||'',
-      t.sl?.toFixed(4)||'',
-      t.tp?.toFixed(4)||'',
-      t.pnl?.toFixed(2)||'',
-      t.pnlPct?.toFixed(2)||'',
-      t.reason||'',
-      t.auto?'AUTO':'MANUAL',
-      capAntes.toFixed(2),
-      capitalAcum.toFixed(2)
-    ].join(',');
+  const fecha = new Date().toLocaleDateString('es-AR').replace(/\/\//g,'-');
+  if(typeof XLSX === 'undefined'){alert('Cargando Excel, intentá de nuevo en 2 segundos');return;}
+  const wb = XLSX.utils.book_new();
+  const headers = ['Fecha','Apertura','Cierre','Par','Señal','Dirección','TF','Confianza%','Entrada$','Salida$','SL$','TP$','PnL$','PnL%','Razón','Tipo','Cap.Antes','Cap.Después'];
+  let capAcum = parseFloat(_get('capital')||1000) - trades.reduce((a,t)=>a+t.pnl,0);
+  const rows = [...trades].reverse().map(t=>{
+    const ca=capAcum; capAcum+=t.pnl;
+    return [fecha,t.openTime||'',t.closeTime||'',t.pair||'',t.signal||'',t.direction||'',t.tf||'?',
+      t.confidence||0,parseFloat(t.entry?.toFixed(4)||0),parseFloat(t.exitPrice?.toFixed(4)||0),
+      parseFloat(t.sl?.toFixed(4)||0),parseFloat(t.tp?.toFixed(4)||0),
+      parseFloat(t.pnl?.toFixed(2)||0),parseFloat((t.pnlPct/100)?.toFixed(4)||0),
+      t.reason||'',t.auto?'AUTO':'MANUAL',parseFloat(ca.toFixed(2)),parseFloat(capAcum.toFixed(2))];
   });
-  const csv = [headers.join(','), ...rows].join('\n');
-  // Use semicolon separator for Excel compatibility (Spanish locale)
-  const csvSemicolon = ['\uFEFF' + headers.join(';'), ...rows.map(r => r.replace(/,/g, ';'))].join('\n');
-  const blob = new Blob([csvSemicolon], {type:'text/csv;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `trades_${fecha}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const wsData = [headers,...rows];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [10,9,9,10,9,9,7,9,10,10,10,10,9,7,8,7,12,14].map(w=>({wch:w}));
+  const wins=trades.filter(t=>t.pnl>0).length;
+  const totalPnl=trades.reduce((a,t)=>a+t.pnl,0);
+  const cap=parseFloat(_get('capital')||1000);
+  const stats=[['ESTADÍSTICAS',''],['',''],['Capital inicial','$1,000.00'],['Capital actual','$'+cap.toFixed(2)],
+    ['P&L total',(totalPnl>=0?'+':'')+'$'+totalPnl.toFixed(2)],['Rendimiento %',((totalPnl/1000)*100).toFixed(2)+'%'],
+    ['Operaciones',trades.length],['Ganadas',wins],['Perdidas',trades.length-wins],
+    ['Win Rate',(trades.length>0?(wins/trades.length*100).toFixed(1):0)+'%'],
+    ['Mejor op','$'+(trades.length>0?Math.max(...trades.map(t=>t.pnl)).toFixed(2):'0.00')],
+    ['Peor op','$'+(trades.length>0?Math.min(...trades.map(t=>t.pnl)).toFixed(2):'0.00')]];
+  const ws2=XLSX.utils.aoa_to_sheet(stats);
+  ws2['!cols']=[{wch:22},{wch:16}];
+  XLSX.utils.book_append_sheet(wb,ws,'Trades');
+  XLSX.utils.book_append_sheet(wb,ws2,'Estadísticas');
+  XLSX.writeFile(wb,'trading_journal_'+fecha+'.xlsx');
 }
 
 // ── Auto Check for SL/TP ─────────────────────────────────
