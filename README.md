@@ -357,6 +357,10 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
       <div class="card-label">RACHA ACTUAL</div>
       <div id="streakInfo" style="font-size:13px;color:#888;text-align:center;padding:8px"></div>
     </div>
+    <div class="card" style="margin-bottom:10px">
+      <div class="card-label">🤖 AUTO vs 👤 MANUAL</div>
+      <div id="autoVsManual"></div>
+    </div>
     <button onclick="resetAll()" class="btn btn-gray" style="width:100%;padding:9px 0;font-size:10px">↺ Reiniciar todo</button>
   </div>
 
@@ -717,6 +721,31 @@ function renderStats(){
   const tfGroups={};
   trades.forEach(t=>{const tf=t.tf||'?';if(!tfGroups[tf])tfGroups[tf]={wins:0,total:0,pnl:0};tfGroups[tf].total++;if(t.pnl>0)tfGroups[tf].wins++;tfGroups[tf].pnl+=t.pnl});
   document.getElementById('tfStats').innerHTML=Object.entries(tfGroups).map(([tf,d])=>`<div class="indicator-row"><span style="font-size:10px;color:#666">${tf.toUpperCase()}</span><span style="font-size:10px;color:#888">${d.wins}/${d.total} wins · ${(d.pnl>=0?'+':'')+'$'+d.pnl.toFixed(2)}</span></div>`).join('')||'<div style="font-size:10px;color:#333;text-align:center;padding:8px">Sin datos aún</div>';
+
+  // AUTO vs MANUAL stats
+  const autoTrades=trades.filter(t=>t.auto);
+  const manualTrades=trades.filter(t=>!t.auto);
+  const autoWins=autoTrades.filter(t=>t.pnl>0).length;
+  const manualWins=manualTrades.filter(t=>t.pnl>0).length;
+  const autoPnl=autoTrades.reduce((a,t)=>a+t.pnl,0);
+  const manualPnl=manualTrades.reduce((a,t)=>a+t.pnl,0);
+  const autoWR=autoTrades.length>0?Math.round(autoWins/autoTrades.length*100):0;
+  const manualWR=manualTrades.length>0?Math.round(manualWins/manualTrades.length*100):0;
+  document.getElementById('autoVsManual').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div style="background:#0d0d2d;border:1px solid #3333aa;border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:10px;color:#8888ff;margin-bottom:4px">🤖 AUTO</div>
+        <div style="font-size:16px;font-weight:700;color:#8888ff">${autoTrades.length} ops</div>
+        <div style="font-size:11px;color:#666;margin-top:3px">${autoWins}/${autoTrades.length} wins (${autoWR}%)</div>
+        <div style="font-size:12px;font-weight:700;color:${autoPnl>=0?'#00ff88':'#ff3355'};margin-top:3px">${autoPnl>=0?'+':''}$${autoPnl.toFixed(2)}</div>
+      </div>
+      <div style="background:#0d2d0d;border:1px solid #00ff8833;border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:10px;color:#00ff88;margin-bottom:4px">👤 MANUAL</div>
+        <div style="font-size:16px;font-weight:700;color:#00ff88">${manualTrades.length} ops</div>
+        <div style="font-size:11px;color:#666;margin-top:3px">${manualWins}/${manualTrades.length} wins (${manualWR}%)</div>
+        <div style="font-size:12px;font-weight:700;color:${manualPnl>=0?'#00ff88':'#ff3355'};margin-top:3px">${manualPnl>=0?'+':''}$${manualPnl.toFixed(2)}</div>
+      </div>
+    </div>`;
   // Streak
   let streak=0,streakType='';
   for(const t of trades){if(t.pnl>0){if(streakType==='win')streak++;else{streak=1;streakType='win'}}else{if(streakType==='loss')streak++;else{streak=1;streakType='loss'}}break}
