@@ -143,9 +143,10 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
           <div class="mini-card"><div class="mini-label">BAJISTAS</div><div class="mini-value" style="color:#ff3355" id="bearScore">0</div></div>
         </div>
         <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:#444">
-          <span id="pairLabel"></span>
-          <span id="priceDisplay"></span>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+          <span style="font-size:10px;color:#444" id="pairLabel"></span>
+          <span id="trendBadge" style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px"></span>
+          <span style="font-size:10px;color:#444" id="priceDisplay"></span>
         </div>
       </div>
 
@@ -568,6 +569,18 @@ function renderSignal(){
   const a=analysis;
   const sc=a.signal==='COMPRAR'?'#00ff88':a.signal==='VENDER'?'#ff3355':'#888';
   document.getElementById('pairLabel').textContent=`${pair.replace('USDT','/USDT')} · ${currentTF.toUpperCase()}`;
+  // Trend indicator
+  const ema20v=calcEMA(a.reasons.map?.[0]?.v||[],20)||0;
+  const sma20=calcSMA(Array.from({length:20},(_,i)=>a.price*(1+Math.random()*0.001-0.0005)),20)||a.price;
+  const ema50v=calcEMA(Array.from({length:50},(_,i)=>a.price*(1+Math.random()*0.002-0.001)),50)||a.price;
+  const trendBadge=document.getElementById('trendBadge');
+  if(a.bullScore>a.bearScore+1){
+    trendBadge.textContent='📈 ALCISTA';trendBadge.style.background='#0d2d1a';trendBadge.style.color='#00ff88';
+  }else if(a.bearScore>a.bullScore+1){
+    trendBadge.textContent='📉 BAJISTA';trendBadge.style.background='#2d0d0d';trendBadge.style.color='#ff3355';
+  }else{
+    trendBadge.textContent='↔️ LATERAL';trendBadge.style.background='#111';trendBadge.style.color='#888';
+  }
   document.getElementById('priceDisplay').textContent=`$${fp(a.price)}`;
   const sb=document.getElementById('signalBox');
   sb.style.borderColor=sc;sb.style.background=a.signal==='COMPRAR'?'#0d2d1a':a.signal==='VENDER'?'#2d0d0d':'#111';
@@ -676,7 +689,12 @@ function renderActionArea(){
 // ── Paper Trading ─────────────────────────────────────────
 function openPaperTrade(){
   if(!analysis||analysis.signal==='NEUTRO'||openTrade)return;
-  const size=capital*0.95;
+  // Advanced position sizing: risk 2% of capital based on SL distance
+  const riskPct = 0.02;
+  const riskAmt = capital * riskPct;
+  const slDistance = Math.abs(analysis.entry - analysis.sl);
+  const positionSize = slDistance > 0 ? (riskAmt / slDistance) * analysis.entry : capital * 0.95;
+  const size = Math.min(positionSize, capital * 0.95); // max 95% of capital
   openTrade={id:Date.now(),pair,signal:analysis.signal,direction:analysis.direction,entry:analysis.entry,tp:analysis.tp,sl:analysis.sl,qty:size/analysis.entry,size,tf:currentTF,openTime:new Date().toLocaleTimeString('es-AR'),confidence:analysis.confidence,auto:autoMode};
   _set('openTrade',JSON.stringify(openTrade));
   renderActionArea();
