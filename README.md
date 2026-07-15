@@ -56,10 +56,13 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
     <span style="font-weight:800;font-size:12px;letter-spacing:3px;color:#fff">SIGNAL BOT PRO</span>
     <span id="modeLabel" style="font-size:9px;color:#00ff8866;border:1px solid #00ff8822;border-radius:4px;padding:1px 6px;margin-left:8px">DEMO</span>
   </div>
-  <div style="text-align:right">
-    <div style="font-size:9px;color:#444" id="modeIndicator">DEMO · CAPITAL</div>
-    <div style="font-size:12px;font-weight:700" id="capitalDisplay">$1000.00</div>
-    <div style="font-size:10px;font-weight:700;display:none" id="realBalanceDisplay"></div>
+  <div style="text-align:right;display:flex;align-items:center;gap:10px">
+    <div id="streakBadge" style="display:none;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px"></div>
+    <div>
+      <div style="font-size:9px;color:#444" id="modeIndicator">DEMO · CAPITAL</div>
+      <div style="font-size:12px;font-weight:700" id="capitalDisplay">$1000.00</div>
+      <div style="font-size:10px;font-weight:700;display:none" id="realBalanceDisplay"></div>
+    </div>
   </div>
 </div>
 
@@ -782,10 +785,34 @@ function renderStats(){
         <div style="font-size:12px;font-weight:700;color:${manualPnl>=0?'#00ff88':'#ff3355'};margin-top:3px">${manualPnl>=0?'+':''}$${manualPnl.toFixed(2)}</div>
       </div>
     </div>`;
-  // Streak
+  // Streak calculation
   let streak=0,streakType='';
-  for(const t of trades){if(t.pnl>0){if(streakType==='win')streak++;else{streak=1;streakType='win'}}else{if(streakType==='loss')streak++;else{streak=1;streakType='loss'}}break}
-  document.getElementById('streakInfo').textContent=trades.length===0?'Sin operaciones aún':`Racha actual: ${streak} ${streakType==='win'?'✅ ganadas':'❌ perdidas'} seguidas`;
+  for(const t of trades){
+    if(streak===0){streak=1;streakType=t.pnl>0?'win':'loss';}
+    else if((t.pnl>0&&streakType==='win')||(t.pnl<=0&&streakType==='loss'))streak++;
+    else break;
+  }
+  const streakText=trades.length===0?'Sin operaciones aún':`Racha: ${streak} ${streakType==='win'?'✅ ganadas':'❌ perdidas'} seguidas`;
+  document.getElementById('streakInfo').textContent=streakText;
+  
+  // Update streak badge in header
+  const badge=document.getElementById('streakBadge');
+  if(trades.length>0&&streak>=2){
+    badge.style.display='block';
+    if(streakType==='win'){
+      badge.textContent=`🔥 ${streak} ganadas`;
+      badge.style.background='#0d2d1a';
+      badge.style.color='#00ff88';
+      badge.style.border='1px solid #00ff8833';
+    }else{
+      badge.textContent=`❄️ ${streak} perdidas`;
+      badge.style.background='#2d0d0d';
+      badge.style.color='#ff3355';
+      badge.style.border='1px solid #ff335533';
+    }
+  }else{
+    badge.style.display='none';
+  }
 }
 
 // ── Auto Trading ──────────────────────────────────────────
