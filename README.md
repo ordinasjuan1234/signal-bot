@@ -697,6 +697,10 @@ function closePaperTrade(reason){
   _set('dailyTrades',dailyTrades.toString());
   openTrade=null;
   _set('openTrade','null');
+  // Send close alert to Telegram
+  const closeEmoji=pnl>=0?'✅':'❌';
+  const closeMsg=`${closeEmoji} OPERACIÓN CERRADA\n📊 ${closed.pair.replace('USDT','/USDT')} · ${closed.tf||'?'}\n${closed.signal} · ${closed.direction}\n💵 Entrada: $${fp(closed.entry)} → Salida: $${fp(closed.exitPrice)}\n${pnl>=0?'💰':'📉'} PnL: ${pnl>=0?'+':''}$${pnl.toFixed(2)} (${pnlPct.toFixed(2)}%)\n🏷 Razón: ${reason}\n💰 Capital: $${capital.toFixed(2)}`;
+  fetch(BACKEND_URL+'/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:closeMsg})}).catch(()=>{});
   updateCapitalDisplay();
   renderActionArea();
   renderTrades();
@@ -704,6 +708,7 @@ function closePaperTrade(reason){
   updateAutoStats();
   if(consecutiveLosses>=3){
     addAutoLog('⚠ 3 pérdidas seguidas — bot pausado por tu seguridad');
+    fetch(BACKEND_URL+'/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:'⚠️ BOT PAUSADO\n3 pérdidas seguidas detectadas\n🛡 Capital protegido: $'+capital.toFixed(2)+'\nRevisá las señales antes de reactivar'})}).catch(()=>{});
     stopAuto();
   }
 }
@@ -881,7 +886,7 @@ async function runAutoCheck(){
       document.getElementById('pairSelect').value=best.pair;
       openPaperTrade();
       addAutoLog(`🔴 VENTA automática ${best.pair.replace('USDT','')} · TF:${best.tf} · Conf:${best.confidence}%`);
-      fetch(BACKEND_URL+'/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`🔴 VENTA AUTO\n📊 ${best.pair.replace('USDT','/USDT')}\n⏱ TF: ${best.tf}\n🎯 Confianza: ${best.confidence}%\n💵 Entrada: $${best.analysis.price?.toFixed(2)||'?'}`})}).catch(()=>{});
+      fetch(BACKEND_URL+'/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`🔴 VENTA AUTO\n📊 ${best.pair.replace('USDT','/USDT')} · ${best.tf.toUpperCase()}\n💵 Entrada: $${best.analysis.entry?.toFixed(2)||'?'}\n🎯 Take Profit: $${best.analysis.tp?.toFixed(2)||'?'}\n🛑 Stop Loss: $${best.analysis.sl?.toFixed(2)||'?'}\n📊 R/R: 1:${best.analysis.rr?.toFixed(2)||'?'}\n🎯 Confianza: ${best.confidence}%`})}).catch(()=>{});
     }else{
       addAutoLog(`⏳ Sin señal en ${pairsToCheck.map(p=>p.replace('USDT','')).join(', ')} — esperando...`);
     }
@@ -1200,6 +1205,3 @@ scheduleDailySummary(22);
 </script>
 </body>
 </html>
-
-
-
