@@ -1151,17 +1151,20 @@ function sendDailySummary(){
   updateAutoStats();
 }
 
-function scheduleDailySummary(hour=22){
+function scheduleDailySummary(localHour=22){
+  // Convert local Argentina hour (UTC-3) to UTC
+  const utcHour=(localHour+3)%24;
   const now=new Date();
   const next=new Date();
-  next.setHours(hour,0,0,0);
-  if(next<=now)next.setDate(next.getDate()+1);
+  next.setUTCHours(utcHour,0,0,0);
+  if(next<=now)next.setUTCDate(next.getUTCDate()+1);
   const ms=next-now;
   setTimeout(()=>{
     sendDailySummary();
     setInterval(sendDailySummary,24*60*60*1000);
   },ms);
-  console.log(`Resumen diario programado para las ${hour}:00`);
+  const horasRestantes=Math.round(ms/3600000);
+  console.log(`Resumen diario programado para las ${localHour}:00 hs Argentina (en ${horasRestantes}hs)`);
 }
 
 // ── Sound Alert ──────────────────────────────────────────
