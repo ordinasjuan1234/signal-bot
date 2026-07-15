@@ -763,8 +763,9 @@ function renderStats(){
   const capPct=(((capital-INITIAL_CAPITAL)/INITIAL_CAPITAL)*100).toFixed(2);
   const avgWin=wins>0?trades.filter(t=>t.pnl>0).reduce((a,t)=>a+t.pnl,0)/wins:0;
   const avgLoss=losses>0?Math.abs(trades.filter(t=>t.pnl<0).reduce((a,t)=>a+t.pnl,0)/losses):0;
+  const capActual=parseFloat(_get('capital'))||INITIAL_CAPITAL;
   const stats=[
-    {l:'Capital',v:'$'+capital.toFixed(2),c:capital>=INITIAL_CAPITAL?'#00ff88':'#ff3355'},
+    {l:'Capital',v:'$'+capActual.toFixed(2),c:capActual>=INITIAL_CAPITAL?'#00ff88':'#ff3355'},
     {l:'P&L total',v:(totalPnl>=0?'+':'')+'$'+totalPnl.toFixed(2),c:totalPnl>=0?'#00ff88':'#ff3355'},
     {l:'Win rate',v:winRate+'%',c:winRate>=50?'#00ff88':'#ff8c00'},
     {l:'Operaciones',v:trades.length,c:'#8888ff'},
@@ -1015,7 +1016,10 @@ function exportTrades(){
   if(typeof XLSX === 'undefined'){alert('Cargando Excel, intentá de nuevo en 2 segundos');return;}
   const wb = XLSX.utils.book_new();
   const headers = ['Fecha','Apertura','Cierre','Par','Señal','Dirección','TF','Confianza%','Entrada$','Salida$','SL$','TP$','PnL$','PnL%','Razón','Tipo','Cap.Antes','Cap.Después'];
-  let capAcum = parseFloat(_get('capital')||1000) - trades.reduce((a,t)=>a+t.pnl,0);
+  const capFinal = parseFloat(_get('capital')||1000);
+  const totalPnlCalc = trades.reduce((a,t)=>a+t.pnl,0);
+  let capAcum = capFinal - totalPnlCalc;
+  if(capAcum < 0 || capAcum > 100000) capAcum = INITIAL_CAPITAL;
   const rows = [...trades].reverse().map(t=>{
     const ca=capAcum; capAcum+=t.pnl;
     return [fecha,t.openTime||'',t.closeTime||'',t.pair||'',t.signal||'',t.direction||'',t.tf||'?',
