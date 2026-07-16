@@ -689,12 +689,14 @@ function renderActionArea(){
 // ── Paper Trading ─────────────────────────────────────────
 function openPaperTrade(){
   if(!analysis||analysis.signal==='NEUTRO'||openTrade)return;
-  // Advanced position sizing: risk 2% of capital based on SL distance
+  // Advanced position sizing: risk 2% of capital based on SL distance, with safety cap
   const riskPct = 0.02;
   const riskAmt = capital * riskPct;
   const slDistance = Math.abs(analysis.entry - analysis.sl);
-  const positionSize = slDistance > 0 ? (riskAmt / slDistance) * analysis.entry : capital * 0.95;
-  const size = Math.min(positionSize, capital * 0.95); // max 95% of capital
+  const minSlDistance = analysis.entry * 0.001; // minimum 0.1% distance to avoid huge sizes
+  const safeSlDistance = Math.max(slDistance, minSlDistance);
+  const positionSize = (riskAmt / safeSlDistance) * analysis.entry;
+  const size = Math.min(Math.max(positionSize, 0), capital * 0.95); // clamp between 0 and 95% of capital
   openTrade={id:Date.now(),pair,signal:analysis.signal,direction:analysis.direction,entry:analysis.entry,tp:analysis.tp,sl:analysis.sl,qty:size/analysis.entry,size,tf:currentTF,openTime:new Date().toLocaleTimeString('es-AR'),confidence:analysis.confidence,auto:autoMode};
   _set('openTrade',JSON.stringify(openTrade));
   renderActionArea();
