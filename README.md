@@ -706,11 +706,18 @@ function closePaperTrade(reason){
   if(!openTrade||!analysis)return;
   const exitPrice=analysis.price;
   const pricePct=openTrade.signal==='COMPRAR'?(exitPrice-openTrade.entry)/openTrade.entry:(openTrade.entry-exitPrice)/openTrade.entry;
-  const pnl=openTrade.size*pricePct;
+  // Safety cap: pnl can never exceed the position size (max loss = -100% of size, max gain capped reasonably)
+  const rawPnl=openTrade.size*pricePct;
+  const pnl=Math.max(-openTrade.size, Math.min(rawPnl, openTrade.size*5)); // cap gains at 5x position size, losses at -100% of size
   const pnlPct=pricePct*100;
   const closed={...openTrade,exitPrice,pnl,pnlPct,closeTime:new Date().toLocaleTimeString('es-AR'),reason};
   trades.unshift(closed);
+  // Re-read capital from storage to avoid desync, then apply pnl
+  capital=parseFloat(_get('capital'))||capital;
   capital+=pnl;
+  // Safety floor: capital can never go below 0 or above a sane multiple of initial
+  if(capital<0)capital=0;
+  if(capital>INITIAL_CAPITAL*1000)capital=INITIAL_CAPITAL;
   dailyPnl+=pnl;
   dailyTrades++;
   if(pnl<0)consecutiveLosses++;else consecutiveLosses=0;
