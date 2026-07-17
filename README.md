@@ -885,7 +885,7 @@ async function runAutoCheck(){
   if(dailyPnl>=maxGain){
     const msg=`✅ LÍMITE DE GANANCIA ALCANZADO\n💰 Ganancia del día: +$${dailyPnl.toFixed(2)}\n🛑 Bot detenido automáticamente`;
     addAutoLog(`✅ Límite de ganancia alcanzado ($${dailyPnl.toFixed(2)})`);
-    fetch('${BACKEND_URL}/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})}).catch(()=>{});
+    fetch(BACKEND_URL+'/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})}).catch(()=>{});
     stopAuto();return}
   if(dailyPnl<=-maxLoss){
     const msg=`🛑 LÍMITE DE PÉRDIDA ALCANZADO\n📉 Pérdida del día: $${dailyPnl.toFixed(2)}\n🔒 Bot detenido para proteger tu capital`;
