@@ -689,15 +689,11 @@ function renderActionArea(){
 // ── Paper Trading ─────────────────────────────────────────
 function openPaperTrade(){
   if(!analysis||analysis.signal==='NEUTRO'||openTrade)return;
-  // Advanced position sizing: risk 2% of capital based on SL distance, with safety cap
-  const riskPct = 0.02;
-  const riskAmt = capital * riskPct;
-  const slDistance = Math.abs(analysis.entry - analysis.sl);
-  const minSlDistance = analysis.entry * 0.001; // minimum 0.1% distance to avoid huge sizes
-  const safeSlDistance = Math.max(slDistance, minSlDistance);
-  const positionSize = (riskAmt / safeSlDistance) * analysis.entry;
-  const size = Math.min(Math.max(positionSize, 0), capital * 0.95); // clamp between 0 and 95% of capital
-  openTrade={id:Date.now(),pair,signal:analysis.signal,direction:analysis.direction,entry:analysis.entry,tp:analysis.tp,sl:analysis.sl,qty:size/analysis.entry,size,tf:currentTF,openTime:new Date().toLocaleTimeString('es-AR'),confidence:analysis.confidence,auto:autoMode};
+  // Simple, safe position sizing: always use a fixed % of capital as the position value.
+  // This guarantees the position (and therefore any possible loss) can never exceed a known amount.
+  const size = capital * 0.20; // use 20% of capital per trade, simple and safe
+  const qty = analysis.entry > 0 ? size / analysis.entry : 0;
+  openTrade={id:Date.now(),pair,signal:analysis.signal,direction:analysis.direction,entry:analysis.entry,tp:analysis.tp,sl:analysis.sl,qty,size,tf:currentTF,openTime:new Date().toLocaleTimeString('es-AR'),confidence:analysis.confidence,auto:autoMode};
   _set('openTrade',JSON.stringify(openTrade));
   renderActionArea();
 }
