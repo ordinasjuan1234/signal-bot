@@ -361,7 +361,8 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
   <div id="tab-trades" style="display:none">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="font-size:10px;color:#333;letter-spacing:2px">HISTORIAL</div>
-      <button onclick="exportTrades()" class="btn btn-blue" style="padding:5px 10px;font-size:9px">↓ EXPORTAR</button>
+      <button onclick="exportTrades()" class="btn btn-blue" style="padding:5px 10px;font-size:9px">↓ EXCEL</button>
+           <button onclick="exportTradesCSV()" class="btn btn-green" style="padding:5px 10px;font-size:9px;margin-left:4px">↓ CSV (Sheets)</button>
     </div>
     <div id="tradesList"></div>
   </div>
@@ -1016,6 +1017,39 @@ function calcPositionSize(){
 }
 
 // ── Export ────────────────────────────────────────────────
+function exportTradesCSV(){
+  const fecha = new Date().toLocaleDateString('es-AR').replace(/\//g,'-');
+  const headers = ['Fecha','Apertura','Cierre','Par','Señal','Dirección','TF','Confianza','EntradaUSD','SalidaUSD','SLUSD','TPUSD','PnLUSD','PnLPct','Razon','Tipo','CapAntes','CapDespues'];
+  const capFinal = parseFloat(_get('capital')||1000);
+  const totalPnlCalc = trades.reduce((a,t)=>a+t.pnl,0);
+  let capAcum = capFinal - totalPnlCalc;
+  if(capAcum < 0 || capAcum > 100000) capAcum = INITIAL_CAPITAL;
+  const rows = [...trades].reverse().map(t=>{
+    const ca=capAcum; capAcum+=t.pnl;
+    // Use plain numbers with dots, no thousand separators, no currency symbols - safe for any locale
+    return [fecha,t.openTime||'',t.closeTime||'',t.pair||'',t.signal||'',t.direction||'',t.tf||'?',
+      t.confidence||0,
+      (t.entry||0).toFixed(4),
+      (t.exitPrice||0).toFixed(4),
+      (t.sl||0).toFixed(4),
+      (t.tp||0).toFixed(4),
+      (t.pnl||0).toFixed(2),
+      ((t.pnlPct||0)/100).toFixed(4),
+      t.reason||'',t.auto?'AUTO':'MANUAL',
+      ca.toFixed(2),
+      capAcum.toFixed(2)
+    ].join(',');
+  });
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'trades_'+fecha+'.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function exportTrades(){
   const fecha = new Date().toLocaleDateString('es-AR').replace(/\/\//g,'-');
   if(typeof XLSX === 'undefined'){alert('Cargando Excel, intentá de nuevo en 2 segundos');return;}
