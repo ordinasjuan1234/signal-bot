@@ -190,11 +190,27 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
 
   <!-- AUTO TAB -->
   <div id="tab-auto" style="display:none">
+    <div class="card" style="border-color:#00ff8855;background:linear-gradient(135deg,#0d1810,#0d0d18)">
+      <div class="card-label" style="color:#00ff88">🌐 SERVIDOR 24/7 (el que realmente opera)</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div id="serverAutoDot" style="width:12px;height:12px;border-radius:50%;background:#333"></div>
+        <span id="serverAutoStatus" style="font-size:13px;font-weight:700;color:#666">Cargando...</span>
+      </div>
+      <div class="grid3" style="margin-bottom:10px">
+        <div class="mini-card"><div class="mini-label">CAPITAL REAL</div><div class="mini-value" id="serverCapital" style="color:#8888ff">--</div></div>
+        <div class="mini-card"><div class="mini-label">P&L HOY</div><div class="mini-value" id="serverDailyPnl">--</div></div>
+        <div class="mini-card"><div class="mini-label">OPERACIONES</div><div class="mini-value" id="serverTradesCount" style="color:#8888ff">--</div></div>
+      </div>
+      <div id="serverStreak" style="display:none;font-size:11px;padding:6px;text-align:center;border-radius:6px;background:#1a0d0d;margin-bottom:10px"></div>
+      <button onclick="toggleServerAuto()" id="serverAutoBtn" class="btn btn-blue" style="width:100%;padding:12px 0;font-size:12px;letter-spacing:1px">▶ ACTIVAR AUTO (Servidor)</button>
+      <div style="font-size:9px;color:#444;margin-top:8px;text-align:center">Este panel muestra el estado real del servidor — sigue operando aunque cierres esta página.</div>
+    </div>
+
     <div class="card">
-      <div class="card-label">MODO AUTOMÁTICO</div>
+      <div class="card-label">⚙️ CONFIGURACIÓN LOCAL (se aplica al servidor al guardar)</div>
       <div class="auto-status">
         <div class="auto-dot" id="autoDot" style="background:#333"></div>
-        <span style="font-size:12px;font-weight:700" id="autoStatusText">INACTIVO</span>
+        <span style="font-size:12px;font-weight:700" id="autoStatusText">INACTIVO (vista local)</span>
       </div>
       <div class="grid2" style="margin-bottom:10px">
         <div>
@@ -847,9 +863,10 @@ function toggleAutoPair(btn){
   if(btn.classList.contains('active')){if(!autoPairs.includes(p))autoPairs.push(p)}
   else{autoPairs=autoPairs.filter(x=>x!==p)}
   _set('savedAutoPairs',JSON.stringify(autoPairs));
+  updateServerConfig();
 }
 
-function toggleAutoTF(btn){btn.classList.toggle('active');const tf=btn.dataset.tf;if(btn.classList.contains('active')){if(!autoTFs.includes(tf))autoTFs.push(tf)}else{autoTFs=autoTFs.filter(t=>t!==tf)};_set('savedAutoTFs',JSON.stringify(autoTFs))}
+function toggleAutoTF(btn){btn.classList.toggle('active');const tf=btn.dataset.tf;if(btn.classList.contains('active')){if(!autoTFs.includes(tf))autoTFs.push(tf)}else{autoTFs=autoTFs.filter(t=>t!==tf)};_set('savedAutoTFs',JSON.stringify(autoTFs));updateServerConfig();}
 
 function toggleAuto(){
   if(autoMode){stopAuto();return}
@@ -1107,7 +1124,7 @@ function switchTab(tab){
   });
   if(tab==='trades')renderTrades();
   if(tab==='stats')renderStats();
-  if(tab==='auto')updateAutoStats();
+  if(tab==='auto'){updateAutoStats();startServerPolling();}
   if(tab==='risk')calcRisk();
 }
 
@@ -1288,6 +1305,109 @@ function playAlert(type='signal'){
   }catch(e){}
 }
 
+// ── Server-backed AUTO (connects to persistent backend) ────
+let serverState = null;
+let serverPollInterval = null;
+
+async function fetchServerState() {
+  try {
+    const res = await fetch(BACKEND_URL + '/state');
+    const data = await res.json();
+    serverState = data;
+    renderServerAutoUI();
+    return data;
+  } catch(e) {
+    console.log('Error fetching server state:', e);
+    return null;
+  }
+}
+
+async function toggleServerAuto() {
+  try {
+    const res = await fetch(BACKEND_URL + '/state/toggle-auto', { method: 'POST' });
+    const data = await res.json();
+    await fetchServerState();
+  } catch(e) {
+    alert('Error conectando al servidor: ' + e.message);
+  }
+}
+
+async function updateServerConfig() {
+  const config = {
+    autoPairs: autoPairs,
+    autoTFs: autoTFs,
+    minConfidence: parseInt(document.getElementById('minConfidence').value) || 70,
+    requireMTF: document.getElementById('requireMTF').checked,
+    maxDailyGainPct: parseFloat(document.getElementById('maxDailyGain').value) || 5,
+    maxDailyLossPct: parseFloat(document.getElementById('maxDailyLoss').value) || 3
+  };
+  try {
+    await fetch(BACKEND_URL + '/state/config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(config)
+    });
+    await fetchServerState();
+  } catch(e) {
+    console.log('Error updating config:', e);
+  }
+}
+
+function renderServerAutoUI() {
+  if (!serverState) return;
+  const s = serverState;
+  
+  // Update status indicator
+  const statusEl = document.getElementById('serverAutoStatus');
+  const dotEl = document.getElementById('serverAutoDot');
+  const btnEl = document.getElementById('serverAutoBtn');
+  if (statusEl) {
+    statusEl.textContent = s.autoMode ? '🟢 ACTIVO (Servidor 24/7)' : '⚪ INACTIVO';
+    statusEl.style.color = s.autoMode ? '#00ff88' : '#666';
+  }
+  if (dotEl) dotEl.style.background = s.autoMode ? '#00ff88' : '#333';
+  if (btnEl) {
+    btnEl.textContent = s.autoMode ? '⏸ PAUSAR AUTO (Servidor)' : '▶ ACTIVAR AUTO (Servidor)';
+    btnEl.className = s.autoMode ? 'btn btn-orange' : 'btn btn-blue';
+  }
+  
+  // Update capital display from server (source of truth)
+  const capEl = document.getElementById('serverCapital');
+  if (capEl) capEl.textContent = '$' + s.capital.toFixed(2);
+  
+  const dailyEl = document.getElementById('serverDailyPnl');
+  if (dailyEl) {
+    dailyEl.textContent = (s.dailyPnl >= 0 ? '+' : '') + '$' + s.dailyPnl.toFixed(2);
+    dailyEl.style.color = s.dailyPnl >= 0 ? '#00ff88' : '#ff3355';
+  }
+  
+  const tradesEl = document.getElementById('serverTradesCount');
+  if (tradesEl) tradesEl.textContent = s.trades.length;
+  
+  const streakEl = document.getElementById('serverStreak');
+  if (streakEl) {
+    if (s.consecutiveLosses >= 2) {
+      streakEl.textContent = '❄️ ' + s.consecutiveLosses + ' pérdidas seguidas';
+      streakEl.style.color = '#ff3355';
+      streakEl.style.display = 'block';
+    } else {
+      streakEl.style.display = 'none';
+    }
+  }
+  
+  // Update capital in main header too, to avoid confusion
+  const mainCapEl = document.getElementById('capitalDisplay');
+  if (mainCapEl && !isRealMode) {
+    mainCapEl.textContent = '$' + s.capital.toFixed(2) + ' (servidor)';
+  }
+}
+
+function startServerPolling() {
+  fetchServerState();
+  if (serverPollInterval) clearInterval(serverPollInterval);
+  serverPollInterval = setInterval(fetchServerState, 15000); // poll every 15s
+}
+
 // ── Init ──────────────────────────────────────────────────
 // Restore saved settings
 const savedPair = _get('savedPair');
@@ -1322,3 +1442,4 @@ scheduleDailySummary(22);
 </script>
 </body>
 </html>
+
