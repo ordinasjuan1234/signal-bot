@@ -66,7 +66,7 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
   <button class="tab" onclick="switchTab('auto')">AUTO</button>
   <button class="tab" onclick="switchTab('risk')">RIESGO</button>
   <button class="tab" onclick="switchTab('trades')">TRADES</button>
-  <button class="tab" onclick="switchTab('stats')">STATS</button>
+
 </div>
 
 <div class="content">
@@ -338,14 +338,6 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
     <div id="tradesList"></div>
   </div>
 
-  <!-- STATS TAB -->
-  <div id="tab-stats" style="display:none">
-    <div style="font-size:9px;color:#333;margin-bottom:10px">Estas estadísticas son del modo demo local (pestaña SEÑAL). Para el servidor real 24/7, ver pestaña AUTO.</div>
-    <div class="grid2" id="statsGrid" style="margin-bottom:10px"></div>
-    <div class="card" style="margin-bottom:10px">
-      <div class="card-label">RENDIMIENTO POR TIMEFRAME</div>
-      <div id="tfStats"></div>
-    </div>
     <div class="card" style="margin-bottom:10px">
       <div class="card-label">RACHA ACTUAL</div>
       <div id="streakInfo" style="font-size:13px;color:#888;text-align:center;padding:8px"></div>
@@ -883,12 +875,11 @@ function startServerPolling(){
 
 // ── Navigation ────────────────────────────────────────────
 function switchTab(tab){
-  ['signal','auto','risk','trades','stats'].forEach((t,i)=>{
+  ['signal','auto','risk','trades'].forEach((t,i)=>{
     document.getElementById('tab-'+t).style.display=t===tab?'block':'none';
     document.querySelectorAll('.tab')[i].classList.toggle('active',t===tab);
   });
   if(tab==='trades')renderTrades();
-  if(tab==='stats')renderStats();
   if(tab==='auto')startServerPolling();
   if(tab==='risk')calcRisk();
 }
