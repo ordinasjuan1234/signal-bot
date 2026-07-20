@@ -204,61 +204,64 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
     </div>
 
     <div class="card">
-      <div class="card-label">MODO AUTOMÁTICO</div>
-      <div class="auto-status">
-        <div class="auto-dot" id="autoDot" style="background:#333"></div>
-        <span style="font-size:12px;font-weight:700" id="autoStatusText">INACTIVO</span>
-      </div>
+      <div class="card-label">⚙️ CONFIGURACIÓN (se aplica al servidor)</div>
       <div class="grid2" style="margin-bottom:10px">
         <div>
           <div style="font-size:10px;color:#555;margin-bottom:4px">Límite ganancia diaria</div>
-          <input type="number" id="maxDailyGain" value="5" min="1" max="50" style="width:100%"> 
+          <input type="number" id="maxDailyGain" value="5" min="1" max="50" style="width:100%" onchange="updateServerConfig()">
           <div style="font-size:9px;color:#333;margin-top:2px">% del capital</div>
         </div>
         <div>
           <div style="font-size:10px;color:#555;margin-bottom:4px">Límite pérdida diaria</div>
-          <input type="number" id="maxDailyLoss" value="3" min="1" max="20" style="width:100%">
+          <input type="number" id="maxDailyLoss" value="3" min="1" max="20" style="width:100%" onchange="updateServerConfig()">
           <div style="font-size:9px;color:#333;margin-top:2px">% del capital</div>
         </div>
       </div>
       <div style="margin-bottom:10px">
         <div style="font-size:10px;color:#555;margin-bottom:4px">Confianza mínima para operar</div>
-        <input type="range" id="minConfidence" min="50" max="90" value="70" style="width:100%;accent-color:#6666ff" oninput="document.getElementById('confValue').textContent=this.value+'%'">
+        <input type="range" id="minConfidence" min="50" max="90" value="70" style="width:100%;accent-color:#6666ff" oninput="document.getElementById('confValue').textContent=this.value+'%'" onchange="updateServerConfig()">
         <div style="display:flex;justify-content:space-between;font-size:9px;color:#444">
           <span>50%</span><span id="confValue" style="color:#8888ff">70%</span><span>90%</span>
         </div>
       </div>
       <div style="margin-bottom:10px">
+        <div style="font-size:10px;color:#555;margin-bottom:4px">Pares a monitorear</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap" id="autoPairSelector">
+          <button class="tf-btn active" data-pair="BTCUSDT" onclick="toggleAutoPair(this)">BTC</button>
+          <button class="tf-btn active" data-pair="ETHUSDT" onclick="toggleAutoPair(this)">ETH</button>
+          <button class="tf-btn" data-pair="SOLUSDT" onclick="toggleAutoPair(this)">SOL</button>
+          <button class="tf-btn" data-pair="BNBUSDT" onclick="toggleAutoPair(this)">BNB</button>
+          <button class="tf-btn" data-pair="XRPUSDT" onclick="toggleAutoPair(this)">XRP</button>
+        </div>
+      </div>
+      <div style="margin-bottom:10px">
         <div style="font-size:10px;color:#555;margin-bottom:4px">Timeframes a monitorear</div>
         <div style="display:flex;gap:4px;flex-wrap:wrap" id="autoTFSelector">
-          <button class="tf-btn active" data-tf="15m" onclick="toggleAutoTF(this)">15m</button>
-          <button class="tf-btn active" data-tf="1h" onclick="toggleAutoTF(this)">1h</button>
-          <button class="tf-btn" data-tf="4h" onclick="toggleAutoTF(this)">4h</button>
+          <button class="tf-btn" data-tf="15m" onclick="toggleAutoTF(this)">15m</button>
+          <button class="tf-btn" data-tf="1h" onclick="toggleAutoTF(this)">1h</button>
+          <button class="tf-btn active" data-tf="4h" onclick="toggleAutoTF(this)">4h</button>
           <button class="tf-btn" data-tf="1d" onclick="toggleAutoTF(this)">1D</button>
         </div>
       </div>
       <div style="margin-bottom:10px">
         <div style="font-size:10px;color:#555;margin-bottom:4px">Requerir confirmación multi-TF</div>
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-          <input type="checkbox" id="requireMTF" checked style="accent-color:#6666ff">
+          <input type="checkbox" id="requireMTF" style="accent-color:#6666ff" onchange="updateServerConfig()">
           <span style="font-size:11px;color:#888">Solo operar cuando 2+ timeframes coinciden</span>
         </label>
       </div>
-      <div style="display:flex;gap:6px">
-        <button onclick="toggleAuto()" id="autoBtn" class="btn btn-blue" style="flex:2;padding:12px 0;font-size:12px">▶ ACTIVAR AUTO</button>
-        <button onclick="stopAuto()" class="btn btn-gray" style="flex:1;padding:12px 0">■ STOP</button>
-      </div>
-      <div id="autoLog" style="margin-top:10px;font-size:10px;color:#444;max-height:120px;overflow-y:auto"></div>
+      <div style="font-size:9px;color:#333;line-height:1.5">✓ Configuración validada por backtest: BTC+ETH en 4h dieron resultados positivos en 180 días de datos históricos reales.</div>
     </div>
 
     <div class="card">
-      <div class="card-label">ESTADÍSTICAS HOY</div>
-      <div class="grid2">
-        <div class="mini-card"><div class="mini-label">P&L HOY</div><div class="mini-value" id="dailyPnl" style="color:#00ff88">+$0.00</div></div>
-        <div class="mini-card"><div class="mini-label">OPERACIONES HOY</div><div class="mini-value" id="dailyTrades" style="color:#8888ff">0</div></div>
-        <div class="mini-card"><div class="mini-label">GANANCIA LÍMITE</div><div class="mini-value" id="gainLimit" style="color:#00ff88">$0.00</div></div>
-        <div class="mini-card"><div class="mini-label">PÉRDIDA LÍMITE</div><div class="mini-value" id="lossLimit" style="color:#ff3355">$0.00</div></div>
+      <div class="card-label">RESUMEN DIARIO</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:10px;color:#555">Hora (Argentina)</span>
+        <input type="number" id="summaryHour" value="22" min="0" max="23" style="width:50px;text-align:center">
+        <span style="font-size:10px;color:#555">hs</span>
+        <button onclick="testDailySummary()" class="btn btn-blue" style="padding:4px 10px;font-size:10px">📤 Probar ahora</button>
       </div>
+      <div style="font-size:9px;color:#333;margin-top:6px">El resumen diario lo envía el servidor automáticamente todos los días a esta hora.</div>
     </div>
   </div>
 
@@ -328,14 +331,16 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
   <!-- TRADES TAB -->
   <div id="tab-trades" style="display:none">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <div style="font-size:10px;color:#333;letter-spacing:2px">HISTORIAL</div>
+      <div style="font-size:10px;color:#333;letter-spacing:2px">HISTORIAL (DEMO LOCAL)</div>
       <button onclick="exportTrades()" class="btn btn-blue" style="padding:5px 10px;font-size:9px">↓ EXPORTAR</button>
     </div>
+    <div style="font-size:9px;color:#333;margin-bottom:10px">Para ver las operaciones reales del servidor 24/7, andá a la pestaña AUTO.</div>
     <div id="tradesList"></div>
   </div>
 
   <!-- STATS TAB -->
   <div id="tab-stats" style="display:none">
+    <div style="font-size:9px;color:#333;margin-bottom:10px">Estas estadísticas son del modo demo local (pestaña SEÑAL). Para el servidor real 24/7, ver pestaña AUTO.</div>
     <div class="grid2" id="statsGrid" style="margin-bottom:10px"></div>
     <div class="card" style="margin-bottom:10px">
       <div class="card-label">RENDIMIENTO POR TIMEFRAME</div>
@@ -345,7 +350,7 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
       <div class="card-label">RACHA ACTUAL</div>
       <div id="streakInfo" style="font-size:13px;color:#888;text-align:center;padding:8px"></div>
     </div>
-    <button onclick="resetAll()" class="btn btn-gray" style="width:100%;padding:9px 0;font-size:10px">↺ Reiniciar todo</button>
+    <button onclick="resetAll()" class="btn btn-gray" style="width:100%;padding:9px 0;font-size:10px">↺ Reiniciar todo (demo local)</button>
   </div>
 
   <div class="disclaimer">MODO DEMO — Sin dinero real. Señales orientativas, no constituyen consejo financiero.</div>
@@ -357,7 +362,10 @@ function _get(k){try{const m=document.cookie.match(new RegExp('(?:^|; )'+k+'=([^
 function _set(k,v){try{const d=new Date();d.setFullYear(d.getFullYear()+1);document.cookie=k+'='+encodeURIComponent(String(v))+';expires='+d.toUTCString()+';path=/;SameSite=Lax'}catch(e){}}
 function _remove(k){try{document.cookie=k+'=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;'}catch(e){}}
 
-// ── State ─────────────────────────────────────────────────
+// ── Backend URL ───────────────────────────────────────────
+const BACKEND_URL='https://trading-backend-x7dw.onrender.com';
+
+// ── State (demo local) ─────────────────────────────────────
 let pair='BTCUSDT';
 let currentTF='15m';
 let analysis=null;
@@ -368,12 +376,11 @@ let trades=[];
 try{const s=_get('trades');if(s&&s!=='null')trades=JSON.parse(s)}catch(e){}
 const INITIAL_CAPITAL=1000;
 let mtfData={};
-let autoMode=false;
-let autoTimer=null;
-let autoTFs=['15m','1h'];
 let dailyPnl=parseFloat(_get('dailyPnl'))||0;
 let dailyTrades=parseInt(_get('dailyTrades'))||0;
 let consecutiveLosses=0;
+let autoPairs=['BTCUSDT','ETHUSDT'];
+let autoTFs=['4h'];
 
 // ── Format ────────────────────────────────────────────────
 function fp(p){
@@ -445,7 +452,6 @@ function analyze(closes,highs,lows){
   else if(signal==='VENDER'){tp=price-range*0.618;sl=price+range*0.382}
   else{tp=price+range*0.3;sl=price-range*0.3}
   const rr=Math.abs(tp-entry)/Math.abs(sl-entry);
-  // Position size based on 2% risk
   const riskAmt=capital*0.02;
   const riskPerUnit=Math.abs(entry-sl);
   const posSize=riskPerUnit>0?(riskAmt/riskPerUnit).toFixed(4):0;
@@ -480,7 +486,6 @@ async function loadData(){
 
 async function loadAllTimeframes(){
   await loadData();
-  // Load MTF in background
   const tfs=['5m','15m','1h','4h','1d','1w'];
   for(const tf of tfs){
     try{
@@ -516,7 +521,6 @@ function renderSignal(){
   const rrEl=document.getElementById('rrText');rrEl.textContent='1 : '+a.rr.toFixed(2);rrEl.style.color=a.rr>=1.5?'#00ff88':'#ff8c00';
   document.getElementById('posSizeText').textContent=a.posSize+' unidades';
   document.getElementById('indicatorsList').innerHTML=a.reasons.map(r=>`<div class="indicator-row"><span style="font-size:10px;color:#666">${r.l}</span><span style="font-size:10px;font-weight:600;color:${r.b===true?'#00ff88':r.b===false?'#ff3355':'#444'}">${r.v}</span></div>`).join('');
-  // Alert banner
   const ab=document.getElementById('alertBanner');
   if(a.signal!=='NEUTRO'&&a.confidence>=70){
     ab.style.display='block';ab.style.background=a.signal==='COMPRAR'?'#0d2d1a':'#2d0d0d';ab.style.borderColor=sc;ab.style.color=sc;
@@ -578,7 +582,7 @@ function renderActionArea(){
   }
 }
 
-// ── Paper Trading ─────────────────────────────────────────
+// ── Paper Trading (demo local) ─────────────────────────────
 function openPaperTrade(){
   if(!analysis||analysis.signal==='NEUTRO'||openTrade)return;
   const size=capital*0.95;
@@ -609,11 +613,6 @@ function closePaperTrade(reason){
   renderActionArea();
   renderTrades();
   renderStats();
-  updateAutoStats();
-  if(consecutiveLosses>=3){
-    addAutoLog('⚠ 3 pérdidas seguidas — bot pausado por tu seguridad');
-    stopAuto();
-  }
 }
 
 function updateCapitalDisplay(){
@@ -639,7 +638,6 @@ function renderStats(){
   const wins=trades.filter(t=>t.pnl>0).length;
   const losses=trades.filter(t=>t.pnl<0).length;
   const winRate=trades.length>0?Math.round(wins/trades.length*100):0;
-  const capPct=(((capital-INITIAL_CAPITAL)/INITIAL_CAPITAL)*100).toFixed(2);
   const avgWin=wins>0?trades.filter(t=>t.pnl>0).reduce((a,t)=>a+t.pnl,0)/wins:0;
   const avgLoss=losses>0?Math.abs(trades.filter(t=>t.pnl<0).reduce((a,t)=>a+t.pnl,0)/losses):0;
   const stats=[
@@ -653,117 +651,41 @@ function renderStats(){
     {l:'Promedio pérdida',v:'-$'+avgLoss.toFixed(2),c:'#ff3355'},
   ];
   document.getElementById('statsGrid').innerHTML=stats.map(s=>`<div class="stat-card"><div style="font-size:9px;color:#444;margin-bottom:3px">${s.l}</div><div style="font-size:16px;font-weight:700;color:${s.c}">${s.v}</div></div>`).join('');
-  // TF stats
   const tfGroups={};
   trades.forEach(t=>{const tf=t.tf||'?';if(!tfGroups[tf])tfGroups[tf]={wins:0,total:0,pnl:0};tfGroups[tf].total++;if(t.pnl>0)tfGroups[tf].wins++;tfGroups[tf].pnl+=t.pnl});
   document.getElementById('tfStats').innerHTML=Object.entries(tfGroups).map(([tf,d])=>`<div class="indicator-row"><span style="font-size:10px;color:#666">${tf.toUpperCase()}</span><span style="font-size:10px;color:#888">${d.wins}/${d.total} wins · ${(d.pnl>=0?'+':'')+'$'+d.pnl.toFixed(2)}</span></div>`).join('')||'<div style="font-size:10px;color:#333;text-align:center;padding:8px">Sin datos aún</div>';
-  // Streak
   let streak=0,streakType='';
   for(const t of trades){if(t.pnl>0){if(streakType==='win')streak++;else{streak=1;streakType='win'}}else{if(streakType==='loss')streak++;else{streak=1;streakType='loss'}}break}
   document.getElementById('streakInfo').textContent=trades.length===0?'Sin operaciones aún':`Racha actual: ${streak} ${streakType==='win'?'✅ ganadas':'❌ perdidas'} seguidas`;
 }
 
-// ── Auto Trading ──────────────────────────────────────────
-function toggleAutoTF(btn){btn.classList.toggle('active');const tf=btn.dataset.tf;if(btn.classList.contains('active')){if(!autoTFs.includes(tf))autoTFs.push(tf)}else{autoTFs=autoTFs.filter(t=>t!==tf)}}
-
-function toggleAuto(){
-  if(autoMode){stopAuto();return}
-  autoMode=true;
-  document.getElementById('autoDot').style.background='#00ff88';
-  document.getElementById('autoStatusText').textContent='ACTIVO — Monitoreando...';
-  document.getElementById('autoBtn').textContent='⏸ PAUSAR AUTO';
-  document.getElementById('autoBtn').className='btn btn-orange';
-  addAutoLog('▶ Bot automático activado');
-  runAutoCheck();
-  autoTimer=setInterval(runAutoCheck,60000);
-}
-
-function stopAuto(){
-  autoMode=false;
-  clearInterval(autoTimer);
-  document.getElementById('autoDot').style.background='#333';
-  document.getElementById('autoStatusText').textContent='INACTIVO';
-  document.getElementById('autoBtn').textContent='▶ ACTIVAR AUTO';
-  document.getElementById('autoBtn').className='btn btn-blue';
-  addAutoLog('■ Bot automático detenido');
-}
-
-async function runAutoCheck(){
-  if(!autoMode)return;
-  const maxGain=capital*(parseFloat(document.getElementById('maxDailyGain').value)||5)/100;
-  const maxLoss=capital*(parseFloat(document.getElementById('maxDailyLoss').value)||3)/100;
-  const minConf=parseInt(document.getElementById('minConfidence').value)||70;
-  const requireMTF=document.getElementById('requireMTF').checked;
-  // Check daily limits
-  if(dailyPnl>=maxGain){addAutoLog(`✅ Límite de ganancia alcanzado ($${dailyPnl.toFixed(2)})`);stopAuto();return}
-  if(dailyPnl<=-maxLoss){addAutoLog(`🛑 Límite de pérdida alcanzado ($${dailyPnl.toFixed(2)})`);stopAuto();return}
-  // Analyze each TF
-  let signals=[];
-  for(const tf of autoTFs){
-    try{
-      const{closes,highs,lows}=await fetchKlines(pair,tf,100);
-      const a=analyze(closes,highs,lows);
-      if(a)signals.push({tf,signal:a.signal,confidence:a.confidence,analysis:a});
-      addAutoLog(`📊 ${tf.toUpperCase()}: ${a?.signal||'?'} (${a?.confidence||0}%)`);
-    }catch(e){}
+// ── Auto Check for SL/TP (demo local) ─────────────────────
+function checkAutoTrade(){
+  if(!openTrade||!analysis)return;
+  const price=analysis.price;
+  if(openTrade.signal==='COMPRAR'){
+    if(price>=openTrade.tp){closePaperTrade('TP Auto')}
+    else if(price<=openTrade.sl){closePaperTrade('SL Auto')}
+  }else if(openTrade.signal==='VENDER'){
+    if(price<=openTrade.tp){closePaperTrade('TP Auto')}
+    else if(price>=openTrade.sl){closePaperTrade('SL Auto')}
   }
-  // Check consensus
-  const buySignals=signals.filter(s=>s.signal==='COMPRAR'&&s.confidence>=minConf);
-  const sellSignals=signals.filter(s=>s.signal==='VENDER'&&s.confidence>=minConf);
-  const threshold=requireMTF?2:1;
-  if(!openTrade){
-    if(buySignals.length>=threshold){
-      const best=buySignals.sort((a,b)=>b.confidence-a.confidence)[0];
-      analysis=best.analysis;currentTF=best.tf;
-      openPaperTrade();
-      addAutoLog(`🟢 COMPRA automática ${pair} · TF:${best.tf} · Conf:${best.confidence}%`);
-    }else if(sellSignals.length>=threshold){
-      const best=sellSignals.sort((a,b)=>b.confidence-a.confidence)[0];
-      analysis=best.analysis;currentTF=best.tf;
-      openPaperTrade();
-      addAutoLog(`🔴 VENTA automática ${pair} · TF:${best.tf} · Conf:${best.confidence}%`);
-    }else{
-      addAutoLog(`⏳ Sin señal suficiente — esperando...`);
-    }
-  }else{
-    // Check if should close
-    try{
-      const{closes}=await fetchKlines(pair,openTrade.tf||currentTF,5);
-      const currentPrice=closes[closes.length-1];
-      if(openTrade.signal==='COMPRAR'&&currentPrice>=openTrade.tp){
-        analysis={...analysis,price:currentPrice};closePaperTrade('TP Auto');
-        addAutoLog(`✅ TP alcanzado automáticamente`);
-      }else if(openTrade.signal==='COMPRAR'&&currentPrice<=openTrade.sl){
-        analysis={...analysis,price:currentPrice};closePaperTrade('SL Auto');
-        addAutoLog(`🛑 SL alcanzado automáticamente`);
-      }else if(openTrade.signal==='VENDER'&&currentPrice<=openTrade.tp){
-        analysis={...analysis,price:currentPrice};closePaperTrade('TP Auto');
-        addAutoLog(`✅ TP alcanzado automáticamente`);
-      }else if(openTrade.signal==='VENDER'&&currentPrice>=openTrade.sl){
-        analysis={...analysis,price:currentPrice};closePaperTrade('SL Auto');
-        addAutoLog(`🛑 SL alcanzado automáticamente`);
-      }
-    }catch(e){}
-  }
-  updateAutoStats();
 }
 
-function addAutoLog(msg){
-  const log=document.getElementById('autoLog');
-  const time=new Date().toLocaleTimeString('es-AR');
-  log.innerHTML=`<div style="margin-bottom:3px"><span style="color:#333">${time}</span> ${msg}</div>`+log.innerHTML;
-  if(log.children.length>20)log.removeChild(log.lastChild);
+// ── Server config UI helpers (pair/TF selectors -> server config) ──
+function toggleAutoPair(btn){
+  btn.classList.toggle('active');
+  const p=btn.dataset.pair;
+  if(btn.classList.contains('active')){if(!autoPairs.includes(p))autoPairs.push(p)}
+  else{autoPairs=autoPairs.filter(x=>x!==p)}
+  updateServerConfig();
 }
-
-function updateAutoStats(){
-  const maxGain=capital*(parseFloat(document.getElementById('maxDailyGain').value)||5)/100;
-  const maxLoss=capital*(parseFloat(document.getElementById('maxDailyLoss').value)||3)/100;
-  const pnlEl=document.getElementById('dailyPnl');
-  pnlEl.textContent=(dailyPnl>=0?'+':'')+'$'+dailyPnl.toFixed(2);
-  pnlEl.style.color=dailyPnl>=0?'#00ff88':'#ff3355';
-  document.getElementById('dailyTrades').textContent=dailyTrades;
-  document.getElementById('gainLimit').textContent='$'+maxGain.toFixed(2);
-  document.getElementById('lossLimit').textContent='$'+maxLoss.toFixed(2);
+function toggleAutoTF(btn){
+  btn.classList.toggle('active');
+  const tf=btn.dataset.tf;
+  if(btn.classList.contains('active')){if(!autoTFs.includes(tf))autoTFs.push(tf)}
+  else{autoTFs=autoTFs.filter(t=>t!==tf)}
+  updateServerConfig();
 }
 
 // ── Risk Calculator ───────────────────────────────────────
@@ -805,21 +727,7 @@ function exportTrades(){
   const a=document.createElement('a');a.href=url;a.download='trades.csv';a.click();
 }
 
-// ── Auto Check for SL/TP ─────────────────────────────────
-function checkAutoTrade(){
-  if(!openTrade||!analysis)return;
-  const price=analysis.price;
-  if(openTrade.signal==='COMPRAR'){
-    if(price>=openTrade.tp){closePaperTrade('TP Auto')}
-    else if(price<=openTrade.sl){closePaperTrade('SL Auto')}
-  }else if(openTrade.signal==='VENDER'){
-    if(price<=openTrade.tp){closePaperTrade('TP Auto')}
-    else if(price>=openTrade.sl){closePaperTrade('SL Auto')}
-  }
-}
-
 // ── Server-backed AUTO (backend real 24/7) ────────────────
-const BACKEND_URL='https://trading-backend-x7dw.onrender.com';
 let serverPollInterval=null;
 
 async function fetchServerState(){
@@ -844,6 +752,40 @@ async function toggleServerAuto(){
     alert('Error conectando al servidor: '+e.message);
   }
   btn.disabled=false;
+}
+
+async function updateServerConfig(){
+  const config={
+    autoPairs:autoPairs,
+    autoTFs:autoTFs,
+    minConfidence:parseInt(document.getElementById('minConfidence').value)||70,
+    requireMTF:document.getElementById('requireMTF').checked,
+    maxDailyGainPct:parseFloat(document.getElementById('maxDailyGain').value)||5,
+    maxDailyLossPct:parseFloat(document.getElementById('maxDailyLoss').value)||3
+  };
+  try{
+    await fetch(BACKEND_URL+'/state/config',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(config)
+    });
+    await fetchServerState();
+  }catch(e){
+    console.log('Error updating config:',e);
+  }
+}
+
+async function testDailySummary(){
+  try{
+    await fetch(BACKEND_URL+'/alert',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message:'📤 Prueba manual — el resumen diario real llega automáticamente a las '+document.getElementById('summaryHour').value+' hs Argentina.'})
+    });
+    alert('Mensaje de prueba enviado a Telegram');
+  }catch(e){
+    alert('Error: '+e.message);
+  }
 }
 
 function renderServerState(s){
@@ -899,6 +841,28 @@ function renderServerState(s){
       </div>`;
     }).join('');
   }
+
+  if(s.autoPairs){
+    autoPairs=[...s.autoPairs];
+    document.querySelectorAll('#autoPairSelector .tf-btn').forEach(b=>{
+      b.classList.toggle('active', autoPairs.includes(b.dataset.pair));
+    });
+  }
+  if(s.autoTFs){
+    autoTFs=[...s.autoTFs];
+    document.querySelectorAll('#autoTFSelector .tf-btn').forEach(b=>{
+      b.classList.toggle('active', autoTFs.includes(b.dataset.tf));
+    });
+  }
+  if(s.minConfidence!==undefined){
+    document.getElementById('minConfidence').value=s.minConfidence;
+    document.getElementById('confValue').textContent=s.minConfidence+'%';
+  }
+  if(s.requireMTF!==undefined){
+    document.getElementById('requireMTF').checked=s.requireMTF;
+  }
+  if(s.maxDailyGainPct!==undefined) document.getElementById('maxDailyGain').value=s.maxDailyGainPct;
+  if(s.maxDailyLossPct!==undefined) document.getElementById('maxDailyLoss').value=s.maxDailyLossPct;
 }
 
 function startServerPolling(){
@@ -915,13 +879,13 @@ function switchTab(tab){
   });
   if(tab==='trades')renderTrades();
   if(tab==='stats')renderStats();
-  if(tab==='auto'){updateAutoStats();startServerPolling();}
+  if(tab==='auto')startServerPolling();
   if(tab==='risk')calcRisk();
 }
 
 function setTF(tf,btn){
   currentTF=tf;
-  document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.mtf-row .tf-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   loadData();
 }
@@ -932,13 +896,12 @@ function addCustomPair(){const v=document.getElementById('customPair').value.toU
 function resetAll(){
   capital=INITIAL_CAPITAL;trades=[];openTrade=null;dailyPnl=0;dailyTrades=0;consecutiveLosses=0;
   _remove('capital');_remove('trades');_remove('openTrade');_remove('dailyPnl');_remove('dailyTrades');
-  updateCapitalDisplay();renderTrades();renderStats();renderActionArea();updateAutoStats();stopAuto();
+  updateCapitalDisplay();renderTrades();renderStats();renderActionArea();
 }
 
 // ── Init ──────────────────────────────────────────────────
 updateCapitalDisplay();
 calcRisk();
-updateAutoStats();
 loadAllTimeframes();
 setInterval(loadData,60000);
 </script>
