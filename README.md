@@ -2,7 +2,6 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Signal Bot Pro</title>
 <style>
@@ -56,13 +55,9 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
     <span style="font-weight:800;font-size:12px;letter-spacing:3px;color:#fff">SIGNAL BOT PRO</span>
     <span id="modeLabel" style="font-size:9px;color:#00ff8866;border:1px solid #00ff8822;border-radius:4px;padding:1px 6px;margin-left:8px">DEMO</span>
   </div>
-  <div style="text-align:right;display:flex;align-items:center;gap:10px">
-    <div id="streakBadge" style="display:none;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px"></div>
-    <div>
-      <div style="font-size:9px;color:#444" id="modeIndicator">DEMO · CAPITAL</div>
-      <div style="font-size:12px;font-weight:700" id="capitalDisplay">$1000.00</div>
-      <div style="font-size:10px;font-weight:700;display:none" id="realBalanceDisplay"></div>
-    </div>
+  <div style="text-align:right">
+    <div style="font-size:9px;color:#444">CAPITAL</div>
+    <div style="font-size:12px;font-weight:700" id="capitalDisplay">$1000.00</div>
   </div>
 </div>
 
@@ -143,10 +138,9 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
           <div class="mini-card"><div class="mini-label">BAJISTAS</div><div class="mini-value" style="color:#ff3355" id="bearScore">0</div></div>
         </div>
         <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
-          <span style="font-size:10px;color:#444" id="pairLabel"></span>
-          <span id="trendBadge" style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px"></span>
-          <span style="font-size:10px;color:#444" id="priceDisplay"></span>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:#444">
+          <span id="pairLabel"></span>
+          <span id="priceDisplay"></span>
         </div>
       </div>
 
@@ -190,27 +184,30 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
 
   <!-- AUTO TAB -->
   <div id="tab-auto" style="display:none">
-    <div class="card" style="border-color:#00ff8855;background:linear-gradient(135deg,#0d1810,#0d0d18)">
+    <div class="card" style="border-color:#00ff8833">
       <div class="card-label" style="color:#00ff88">🌐 SERVIDOR 24/7 (el que realmente opera)</div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <div id="serverAutoDot" style="width:12px;height:12px;border-radius:50%;background:#333"></div>
-        <span id="serverAutoStatus" style="font-size:13px;font-weight:700;color:#666">Cargando...</span>
+      <div class="auto-status">
+        <div class="auto-dot" id="serverAutoDot" style="background:#333"></div>
+        <span style="font-size:12px;font-weight:700" id="serverAutoStatus">Cargando...</span>
       </div>
       <div class="grid3" style="margin-bottom:10px">
         <div class="mini-card"><div class="mini-label">CAPITAL REAL</div><div class="mini-value" id="serverCapital" style="color:#8888ff">--</div></div>
         <div class="mini-card"><div class="mini-label">P&L HOY</div><div class="mini-value" id="serverDailyPnl">--</div></div>
         <div class="mini-card"><div class="mini-label">OPERACIONES</div><div class="mini-value" id="serverTradesCount" style="color:#8888ff">--</div></div>
       </div>
-      <div id="serverStreak" style="display:none;font-size:11px;padding:6px;text-align:center;border-radius:6px;background:#1a0d0d;margin-bottom:10px"></div>
-      <button onclick="toggleServerAuto()" id="serverAutoBtn" class="btn btn-blue" style="width:100%;padding:12px 0;font-size:12px;letter-spacing:1px">▶ ACTIVAR AUTO (Servidor)</button>
-      <div style="font-size:9px;color:#444;margin-top:8px;text-align:center">Este panel muestra el estado real del servidor — sigue operando aunque cierres esta página.</div>
+      <div id="serverStreak" style="display:none;font-size:10px;margin-bottom:8px;text-align:center"></div>
+      <div id="serverOpenTrade" style="display:none;margin-bottom:8px"></div>
+      <button onclick="toggleServerAuto()" id="serverAutoBtn" class="btn btn-blue" style="width:100%;padding:10px 0;font-size:12px">▶ ACTIVAR AUTO (Servidor)</button>
+      <div style="font-size:9px;color:#333;margin-top:8px;line-height:1.5">Este panel muestra el estado real del servidor — sigue operando aunque cierres esta página.</div>
+      <div class="card-label" style="margin-top:10px">ÚLTIMOS TRADES DEL SERVIDOR</div>
+      <div id="serverTradesList" style="font-size:10px;color:#444">Cargando...</div>
     </div>
 
     <div class="card">
-      <div class="card-label">⚙️ CONFIGURACIÓN LOCAL (se aplica al servidor al guardar)</div>
+      <div class="card-label">MODO AUTOMÁTICO</div>
       <div class="auto-status">
         <div class="auto-dot" id="autoDot" style="background:#333"></div>
-        <span style="font-size:12px;font-weight:700" id="autoStatusText">INACTIVO (vista local)</span>
+        <span style="font-size:12px;font-weight:700" id="autoStatusText">INACTIVO</span>
       </div>
       <div class="grid2" style="margin-bottom:10px">
         <div>
@@ -229,16 +226,6 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
         <input type="range" id="minConfidence" min="50" max="90" value="70" style="width:100%;accent-color:#6666ff" oninput="document.getElementById('confValue').textContent=this.value+'%'">
         <div style="display:flex;justify-content:space-between;font-size:9px;color:#444">
           <span>50%</span><span id="confValue" style="color:#8888ff">70%</span><span>90%</span>
-        </div>
-      </div>
-      <div style="margin-bottom:10px">
-        <div style="font-size:10px;color:#555;margin-bottom:4px">Pares a monitorear</div>
-        <div style="display:flex;gap:4px;flex-wrap:wrap" id="autoPairSelector">
-          <button class="tf-btn active" data-pair="BTCUSDT" onclick="toggleAutoPair(this)">BTC</button>
-          <button class="tf-btn" data-pair="ETHUSDT" onclick="toggleAutoPair(this)">ETH</button>
-          <button class="tf-btn" data-pair="SOLUSDT" onclick="toggleAutoPair(this)">SOL</button>
-          <button class="tf-btn" data-pair="BNBUSDT" onclick="toggleAutoPair(this)">BNB</button>
-          <button class="tf-btn" data-pair="XRPUSDT" onclick="toggleAutoPair(this)">XRP</button>
         </div>
       </div>
       <div style="margin-bottom:10px">
@@ -261,42 +248,7 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
         <button onclick="toggleAuto()" id="autoBtn" class="btn btn-blue" style="flex:2;padding:12px 0;font-size:12px">▶ ACTIVAR AUTO</button>
         <button onclick="stopAuto()" class="btn btn-gray" style="flex:1;padding:12px 0">■ STOP</button>
       </div>
-      <div style="margin-top:10px;display:flex;align-items:center;gap:8px">
-        <span style="font-size:10px;color:#555">Resumen diario a las</span>
-        <input type="number" id="summaryHour" value="22" min="0" max="23" style="width:50px;text-align:center">
-        <span style="font-size:10px;color:#555">hs</span>
-        <button onclick="scheduleDailySummary(parseInt(document.getElementById('summaryHour').value));sendDailySummary()" class="btn btn-blue" style="padding:4px 10px;font-size:10px">📤 Probar ahora</button>
-      </div>
       <div id="autoLog" style="margin-top:10px;font-size:10px;color:#444;max-height:120px;overflow-y:auto"></div>
-    </div>
-
-    <div class="card" style="border-color:#ff880033">
-      <div class="card-label" style="color:#ff8800">⚡ MODO REAL — BINANCE</div>
-      <div style="margin-bottom:8px">
-        <div style="font-size:10px;color:#555;margin-bottom:4px">API Key</div>
-        <input type="password" id="apiKeyInput" placeholder="Tu API Key de Binance" style="width:100%;margin-bottom:6px" value="">
-        <div style="font-size:10px;color:#555;margin-bottom:4px">Secret Key</div>
-        <input type="password" id="apiSecretInput" placeholder="Tu Secret Key de Binance" style="width:100%;margin-bottom:8px" value="">
-        <div style="display:flex;gap:6px">
-          <button onclick="saveApiKeys()" class="btn btn-orange" style="flex:2;padding:10px 0">💾 Guardar claves</button>
-          <button onclick="testConnection()" class="btn btn-blue" style="flex:1;padding:10px 0">🔌 Probar</button>
-        </div>
-        <div id="connectionStatus" style="margin-top:8px;font-size:10px;color:#444;text-align:center"></div>
-      </div>
-      <div style="margin-bottom:8px">
-        <div style="font-size:10px;color:#555;margin-bottom:4px">% del saldo a usar por operación</div>
-        <div style="display:flex;gap:4px;flex-wrap:wrap" id="pctSelector">
-          <button class="tf-btn active" data-pct="5" onclick="selectPct(this)">5%</button>
-          <button class="tf-btn" data-pct="10" onclick="selectPct(this)">10%</button>
-          <button class="tf-btn" data-pct="25" onclick="selectPct(this)">25%</button>
-          <button class="tf-btn" data-pct="50" onclick="selectPct(this)">50%</button>
-        </div>
-      </div>
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px">
-        <input type="checkbox" id="realModeToggle" onchange="toggleRealMode()" style="accent-color:#ff8800">
-        <span style="font-size:11px;color:#ff8800;font-weight:700">ACTIVAR MODO REAL (órdenes con dinero real)</span>
-      </label>
-      <div style="font-size:9px;color:#333;line-height:1.6">⚠ Las órdenes en modo real se ejecutan inmediatamente en Binance con dinero real. Usá gestión de riesgo.</div>
     </div>
 
     <div class="card">
@@ -377,8 +329,7 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
   <div id="tab-trades" style="display:none">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="font-size:10px;color:#333;letter-spacing:2px">HISTORIAL</div>
-      <button onclick="exportTrades()" class="btn btn-blue" style="padding:5px 10px;font-size:9px">↓ EXCEL</button>
-           <button onclick="exportTradesCSV()" class="btn btn-green" style="padding:5px 10px;font-size:9px;margin-left:4px">↓ CSV (Sheets)</button>
+      <button onclick="exportTrades()" class="btn btn-blue" style="padding:5px 10px;font-size:9px">↓ EXPORTAR</button>
     </div>
     <div id="tradesList"></div>
   </div>
@@ -394,10 +345,6 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
       <div class="card-label">RACHA ACTUAL</div>
       <div id="streakInfo" style="font-size:13px;color:#888;text-align:center;padding:8px"></div>
     </div>
-    <div class="card" style="margin-bottom:10px">
-      <div class="card-label">🤖 AUTO vs 👤 MANUAL</div>
-      <div id="autoVsManual"></div>
-    </div>
     <button onclick="resetAll()" class="btn btn-gray" style="width:100%;padding:9px 0;font-size:10px">↺ Reiniciar todo</button>
   </div>
 
@@ -409,39 +356,6 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
 function _get(k){try{const m=document.cookie.match(new RegExp('(?:^|; )'+k+'=([^;]*)'));return m?decodeURIComponent(m[1]):null}catch(e){return null}}
 function _set(k,v){try{const d=new Date();d.setFullYear(d.getFullYear()+1);document.cookie=k+'='+encodeURIComponent(String(v))+';expires='+d.toUTCString()+';path=/;SameSite=Lax'}catch(e){}}
 function _remove(k){try{document.cookie=k+'=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;'}catch(e){}}
-
-// ── Backend ──────────────────────────────────────────────
-const BACKEND_URL = "https://trading-backend-x7dw.onrender.com";
-let apiKey = _get('apiKey') || '';
-let apiSecret = _get('apiSecret') || '';
-let realBalance = null;
-let isRealMode = false;
-
-async function backendPost(endpoint, body) {
-  const res = await fetch(BACKEND_URL + endpoint, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(body)
-  });
-  return res.json();
-}
-
-async function fetchRealBalance() {
-  if (!apiKey || !apiSecret) return;
-  try {
-    const data = await backendPost('/balance', {apiKey, apiSecret});
-    if (data.usdt !== undefined) {
-      realBalance = data.usdt;
-      document.getElementById('realBalanceDisplay').textContent = '$' + realBalance.toFixed(2) + ' USDT';
-      document.getElementById('realBalanceDisplay').style.color = '#ff8800';
-    }
-  } catch(e) { console.log('Balance error:', e); }
-}
-
-async function placeRealOrder(side, quantity) {
-  if (!apiKey || !apiSecret) return {error: 'Sin claves API'};
-  return await backendPost('/order', {apiKey, apiSecret, symbol: pair, side, quantity: quantity.toString()});
-}
 
 // ── State ─────────────────────────────────────────────────
 let pair='BTCUSDT';
@@ -457,7 +371,6 @@ let mtfData={};
 let autoMode=false;
 let autoTimer=null;
 let autoTFs=['15m','1h'];
-let autoPairs=['BTCUSDT'];
 let dailyPnl=parseFloat(_get('dailyPnl'))||0;
 let dailyTrades=parseInt(_get('dailyTrades'))||0;
 let consecutiveLosses=0;
@@ -586,18 +499,6 @@ function renderSignal(){
   const a=analysis;
   const sc=a.signal==='COMPRAR'?'#00ff88':a.signal==='VENDER'?'#ff3355':'#888';
   document.getElementById('pairLabel').textContent=`${pair.replace('USDT','/USDT')} · ${currentTF.toUpperCase()}`;
-  // Trend indicator
-  const ema20v=calcEMA(a.reasons.map?.[0]?.v||[],20)||0;
-  const sma20=calcSMA(Array.from({length:20},(_,i)=>a.price*(1+Math.random()*0.001-0.0005)),20)||a.price;
-  const ema50v=calcEMA(Array.from({length:50},(_,i)=>a.price*(1+Math.random()*0.002-0.001)),50)||a.price;
-  const trendBadge=document.getElementById('trendBadge');
-  if(a.bullScore>a.bearScore+1){
-    trendBadge.textContent='📈 ALCISTA';trendBadge.style.background='#0d2d1a';trendBadge.style.color='#00ff88';
-  }else if(a.bearScore>a.bullScore+1){
-    trendBadge.textContent='📉 BAJISTA';trendBadge.style.background='#2d0d0d';trendBadge.style.color='#ff3355';
-  }else{
-    trendBadge.textContent='↔️ LATERAL';trendBadge.style.background='#111';trendBadge.style.color='#888';
-  }
   document.getElementById('priceDisplay').textContent=`$${fp(a.price)}`;
   const sb=document.getElementById('signalBox');
   sb.style.borderColor=sc;sb.style.background=a.signal==='COMPRAR'?'#0d2d1a':a.signal==='VENDER'?'#2d0d0d':'#111';
@@ -620,21 +521,7 @@ function renderSignal(){
   if(a.signal!=='NEUTRO'&&a.confidence>=70){
     ab.style.display='block';ab.style.background=a.signal==='COMPRAR'?'#0d2d1a':'#2d0d0d';ab.style.borderColor=sc;ab.style.color=sc;
     ab.textContent=`🔔 SEÑAL FUERTE: ${a.signal} ${pair.replace('USDT','/USDT')} — Confianza ${a.confidence}% — TF: ${currentTF.toUpperCase()}`;
-    // Send Telegram alert if signal changed
-    const sigKey='lastSig_'+pair+'_'+currentTF;
-    const lastSig=_get(sigKey)||'';
-    const newSig=a.signal+'_'+a.confidence;
-    if(lastSig!==newSig&&!autoMode){
-      _set(sigKey,newSig);
-      playAlert('signal');
-      const emoji=a.signal==='COMPRAR'?'🟢':'🔴';
-      const msg=`${emoji} SEÑAL FUERTE DETECTADA\n📊 ${pair.replace('USDT','/USDT')} · ${currentTF.toUpperCase()}\n📈 ${a.signal} · ${a.direction}\n🎯 Confianza: ${a.confidence}%\n💵 Precio: $${fp(a.price)}\n🎯 TP: $${fp(a.tp)}\n🛑 SL: $${fp(a.sl)}\n⚠️ Solo informativo — no es consejo financiero`;
-      fetch(BACKEND_URL+'/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})}).catch(()=>{});
-    }
-  }else{
-    ab.style.display='none';
-    _set('lastSig_'+pair+'_'+currentTF,'');
-  }
+  }else{ab.style.display='none'}
   renderActionArea();
   renderMTF();
 }
@@ -669,18 +556,6 @@ function renderActionArea(){
   const el=document.getElementById('actionArea');
   if(!openTrade){
     const disabled=a.signal==='NEUTRO';
-    if (isRealMode) {
-      el.innerHTML=`<div>
-        <div style="display:flex;gap:6px;margin-bottom:8px">
-          ${[5,10,25,50].map(p=>`<button onclick="selectedPct=${p}" style="flex:1;padding:6px 0;background:${selectedPct===p?'#1f1000':'#111'};border:1px solid ${selectedPct===p?'#ff8800':'#2a2a3e'};color:${selectedPct===p?'#ff8800':'#444'};border-radius:6px;font-size:10px;cursor:pointer">${p}%</button>`).join('')}
-        </div>
-        <button onclick="executeRealOrder()" ${disabled?'disabled':''} style="width:100%;padding:12px 0;font-size:12px;letter-spacing:2px;background:${disabled?'#111':a.signal==='COMPRAR'?'#0d2d1a':'#2d0d0d'};border:1px solid ${disabled?'#222':sc};color:${disabled?'#333':sc};border-radius:10px;cursor:${disabled?'not-allowed':'pointer'};font-weight:700">
-          ${disabled?'SIN SEÑAL ACTIVA':'⚡ EJECUTAR '+a.signal+' REAL'}
-        </button>
-        <div style="font-size:9px;color:#333;text-align:center;margin-top:4px">Orden MARKET · Dinero real · Sin garantía de precio exacto</div>
-      </div>`;
-      return;
-    }
     el.innerHTML=`<button class="btn" onclick="openPaperTrade()" ${disabled?'disabled':''} style="width:100%;padding:12px 0;font-size:12px;letter-spacing:2px;background:${disabled?'#111':a.signal==='COMPRAR'?'#0d2d1a':'#2d0d0d'};border-color:${disabled?'#222':sc};color:${disabled?'#333':sc};cursor:${disabled?'not-allowed':'pointer'}">${disabled?'SIN SEÑAL ACTIVA':'▶ SIMULAR '+a.signal+' (DEMO)'}</button>`;
   }else{
     const pricePct=openTrade.signal==='COMPRAR'?(a.price-openTrade.entry)/openTrade.entry:(openTrade.entry-a.price)/openTrade.entry;
@@ -706,11 +581,8 @@ function renderActionArea(){
 // ── Paper Trading ─────────────────────────────────────────
 function openPaperTrade(){
   if(!analysis||analysis.signal==='NEUTRO'||openTrade)return;
-  // Simple, safe position sizing: always use a fixed % of capital as the position value.
-  // This guarantees the position (and therefore any possible loss) can never exceed a known amount.
-  const size = capital * 0.20; // use 20% of capital per trade, simple and safe
-  const qty = analysis.entry > 0 ? size / analysis.entry : 0;
-  openTrade={id:Date.now(),pair,signal:analysis.signal,direction:analysis.direction,entry:analysis.entry,tp:analysis.tp,sl:analysis.sl,qty,size,tf:currentTF,openTime:new Date().toLocaleTimeString('es-AR'),confidence:analysis.confidence,auto:autoMode};
+  const size=capital*0.95;
+  openTrade={id:Date.now(),pair,signal:analysis.signal,direction:analysis.direction,entry:analysis.entry,tp:analysis.tp,sl:analysis.sl,qty:size/analysis.entry,size,tf:currentTF,openTime:new Date().toLocaleTimeString('es-AR'),confidence:analysis.confidence};
   _set('openTrade',JSON.stringify(openTrade));
   renderActionArea();
 }
@@ -719,18 +591,11 @@ function closePaperTrade(reason){
   if(!openTrade||!analysis)return;
   const exitPrice=analysis.price;
   const pricePct=openTrade.signal==='COMPRAR'?(exitPrice-openTrade.entry)/openTrade.entry:(openTrade.entry-exitPrice)/openTrade.entry;
-  // Safety cap: pnl can never exceed the position size (max loss = -100% of size, max gain capped reasonably)
-  const rawPnl=openTrade.size*pricePct;
-  const pnl=Math.max(-openTrade.size, Math.min(rawPnl, openTrade.size*5)); // cap gains at 5x position size, losses at -100% of size
+  const pnl=openTrade.size*pricePct;
   const pnlPct=pricePct*100;
   const closed={...openTrade,exitPrice,pnl,pnlPct,closeTime:new Date().toLocaleTimeString('es-AR'),reason};
   trades.unshift(closed);
-  // Re-read capital from storage to avoid desync, then apply pnl
-  capital=parseFloat(_get('capital'))||capital;
   capital+=pnl;
-  // Safety floor: capital can never go below 0 or above a sane multiple of initial
-  if(capital<0)capital=0;
-  if(capital>INITIAL_CAPITAL*1000)capital=INITIAL_CAPITAL;
   dailyPnl+=pnl;
   dailyTrades++;
   if(pnl<0)consecutiveLosses++;else consecutiveLosses=0;
@@ -740,10 +605,6 @@ function closePaperTrade(reason){
   _set('dailyTrades',dailyTrades.toString());
   openTrade=null;
   _set('openTrade','null');
-  // Send close alert to Telegram
-  const closeEmoji=pnl>=0?'✅':'❌';
-  const closeMsg=`${closeEmoji} OPERACIÓN CERRADA\n📊 ${closed.pair.replace('USDT','/USDT')} · ${closed.tf||'?'}\n${closed.signal} · ${closed.direction}\n💵 Entrada: $${fp(closed.entry)} → Salida: $${fp(closed.exitPrice)}\n${pnl>=0?'💰':'📉'} PnL: ${pnl>=0?'+':''}$${pnl.toFixed(2)} (${pnlPct.toFixed(2)}%)\n🏷 Razón: ${reason}\n💰 Capital: $${capital.toFixed(2)}`;
-  fetch(BACKEND_URL+'/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:closeMsg})}).catch(()=>{});
   updateCapitalDisplay();
   renderActionArea();
   renderTrades();
@@ -751,7 +612,6 @@ function closePaperTrade(reason){
   updateAutoStats();
   if(consecutiveLosses>=3){
     addAutoLog('⚠ 3 pérdidas seguidas — bot pausado por tu seguridad');
-    fetch(BACKEND_URL+'/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:'⚠️ BOT PAUSADO\n3 pérdidas seguidas detectadas\n🛡 Capital protegido: $'+capital.toFixed(2)+'\nRevisá las señales antes de reactivar'})}).catch(()=>{});
     stopAuto();
   }
 }
@@ -767,10 +627,7 @@ function renderTrades(){
   if(trades.length===0){el.innerHTML='<div style="text-align:center;padding:30px;color:#333"><div style="font-size:24px;margin-bottom:8px">📋</div><div style="font-size:11px">Sin operaciones aún</div></div>';return}
   el.innerHTML=trades.map(t=>`<div class="trade-item" style="border-color:${t.pnl>=0?'#00ff8822':'#ff335522'};background:#0d0d18">
     <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-      <div style="display:flex;align-items:center;gap:6px">
-        <span style="font-size:10px;font-weight:700;color:${t.signal==='COMPRAR'?'#00ff88':'#ff3355'}">${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf||'?'}</span>
-        <span style="font-size:9px;padding:2px 5px;border-radius:4px;background:${t.auto?'#1a1a3e':'#1a2a1a'};color:${t.auto?'#8888ff':'#00ff88'}">${t.auto?'🤖 AUTO':'👤 MANUAL'}</span>
-      </div>
+      <span style="font-size:10px;font-weight:700;color:${t.signal==='COMPRAR'?'#00ff88':'#ff3355'}">${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf||'?'}</span>
       <span style="font-size:11px;font-weight:700;color:${t.pnl>=0?'#00ff88':'#ff3355'}">${t.pnl>=0?'+':''}$${t.pnl.toFixed(2)} (${t.pnlPct>=0?'+':''}${t.pnlPct.toFixed(2)}%)</span>
     </div>
     <div style="font-size:9px;color:#333">$${fp(t.entry)} → $${fp(t.exitPrice)} · ${t.reason} · ${t.openTime} · Conf ${t.confidence}%</div>
@@ -785,9 +642,8 @@ function renderStats(){
   const capPct=(((capital-INITIAL_CAPITAL)/INITIAL_CAPITAL)*100).toFixed(2);
   const avgWin=wins>0?trades.filter(t=>t.pnl>0).reduce((a,t)=>a+t.pnl,0)/wins:0;
   const avgLoss=losses>0?Math.abs(trades.filter(t=>t.pnl<0).reduce((a,t)=>a+t.pnl,0)/losses):0;
-  const capActual=parseFloat(_get('capital'))||INITIAL_CAPITAL;
   const stats=[
-    {l:'Capital',v:'$'+capActual.toFixed(2),c:capActual>=INITIAL_CAPITAL?'#00ff88':'#ff3355'},
+    {l:'Capital',v:'$'+capital.toFixed(2),c:capital>=INITIAL_CAPITAL?'#00ff88':'#ff3355'},
     {l:'P&L total',v:(totalPnl>=0?'+':'')+'$'+totalPnl.toFixed(2),c:totalPnl>=0?'#00ff88':'#ff3355'},
     {l:'Win rate',v:winRate+'%',c:winRate>=50?'#00ff88':'#ff8c00'},
     {l:'Operaciones',v:trades.length,c:'#8888ff'},
@@ -801,72 +657,14 @@ function renderStats(){
   const tfGroups={};
   trades.forEach(t=>{const tf=t.tf||'?';if(!tfGroups[tf])tfGroups[tf]={wins:0,total:0,pnl:0};tfGroups[tf].total++;if(t.pnl>0)tfGroups[tf].wins++;tfGroups[tf].pnl+=t.pnl});
   document.getElementById('tfStats').innerHTML=Object.entries(tfGroups).map(([tf,d])=>`<div class="indicator-row"><span style="font-size:10px;color:#666">${tf.toUpperCase()}</span><span style="font-size:10px;color:#888">${d.wins}/${d.total} wins · ${(d.pnl>=0?'+':'')+'$'+d.pnl.toFixed(2)}</span></div>`).join('')||'<div style="font-size:10px;color:#333;text-align:center;padding:8px">Sin datos aún</div>';
-
-  // AUTO vs MANUAL stats
-  const autoTrades=trades.filter(t=>t.auto);
-  const manualTrades=trades.filter(t=>!t.auto);
-  const autoWins=autoTrades.filter(t=>t.pnl>0).length;
-  const manualWins=manualTrades.filter(t=>t.pnl>0).length;
-  const autoPnl=autoTrades.reduce((a,t)=>a+t.pnl,0);
-  const manualPnl=manualTrades.reduce((a,t)=>a+t.pnl,0);
-  const autoWR=autoTrades.length>0?Math.round(autoWins/autoTrades.length*100):0;
-  const manualWR=manualTrades.length>0?Math.round(manualWins/manualTrades.length*100):0;
-  document.getElementById('autoVsManual').innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div style="background:#0d0d2d;border:1px solid #3333aa;border-radius:8px;padding:10px;text-align:center">
-        <div style="font-size:10px;color:#8888ff;margin-bottom:4px">🤖 AUTO</div>
-        <div style="font-size:16px;font-weight:700;color:#8888ff">${autoTrades.length} ops</div>
-        <div style="font-size:11px;color:#666;margin-top:3px">${autoWins}/${autoTrades.length} wins (${autoWR}%)</div>
-        <div style="font-size:12px;font-weight:700;color:${autoPnl>=0?'#00ff88':'#ff3355'};margin-top:3px">${autoPnl>=0?'+':''}$${autoPnl.toFixed(2)}</div>
-      </div>
-      <div style="background:#0d2d0d;border:1px solid #00ff8833;border-radius:8px;padding:10px;text-align:center">
-        <div style="font-size:10px;color:#00ff88;margin-bottom:4px">👤 MANUAL</div>
-        <div style="font-size:16px;font-weight:700;color:#00ff88">${manualTrades.length} ops</div>
-        <div style="font-size:11px;color:#666;margin-top:3px">${manualWins}/${manualTrades.length} wins (${manualWR}%)</div>
-        <div style="font-size:12px;font-weight:700;color:${manualPnl>=0?'#00ff88':'#ff3355'};margin-top:3px">${manualPnl>=0?'+':''}$${manualPnl.toFixed(2)}</div>
-      </div>
-    </div>`;
-  // Streak calculation
+  // Streak
   let streak=0,streakType='';
-  for(const t of trades){
-    if(streak===0){streak=1;streakType=t.pnl>0?'win':'loss';}
-    else if((t.pnl>0&&streakType==='win')||(t.pnl<=0&&streakType==='loss'))streak++;
-    else break;
-  }
-  const streakText=trades.length===0?'Sin operaciones aún':`Racha: ${streak} ${streakType==='win'?'✅ ganadas':'❌ perdidas'} seguidas`;
-  document.getElementById('streakInfo').textContent=streakText;
-  
-  // Update streak badge in header
-  const badge=document.getElementById('streakBadge');
-  if(trades.length>0&&streak>=2){
-    badge.style.display='block';
-    if(streakType==='win'){
-      badge.textContent=`🔥 ${streak} ganadas`;
-      badge.style.background='#0d2d1a';
-      badge.style.color='#00ff88';
-      badge.style.border='1px solid #00ff8833';
-    }else{
-      badge.textContent=`❄️ ${streak} perdidas`;
-      badge.style.background='#2d0d0d';
-      badge.style.color='#ff3355';
-      badge.style.border='1px solid #ff335533';
-    }
-  }else{
-    badge.style.display='none';
-  }
+  for(const t of trades){if(t.pnl>0){if(streakType==='win')streak++;else{streak=1;streakType='win'}}else{if(streakType==='loss')streak++;else{streak=1;streakType='loss'}}break}
+  document.getElementById('streakInfo').textContent=trades.length===0?'Sin operaciones aún':`Racha actual: ${streak} ${streakType==='win'?'✅ ganadas':'❌ perdidas'} seguidas`;
 }
 
 // ── Auto Trading ──────────────────────────────────────────
-function toggleAutoPair(btn){
-  btn.classList.toggle('active');
-  const p=btn.dataset.pair;
-  if(btn.classList.contains('active')){if(!autoPairs.includes(p))autoPairs.push(p)}
-  else{autoPairs=autoPairs.filter(x=>x!==p)}
-  _set('savedAutoPairs',JSON.stringify(autoPairs));
-  updateServerConfig();
-}
-
-function toggleAutoTF(btn){btn.classList.toggle('active');const tf=btn.dataset.tf;if(btn.classList.contains('active')){if(!autoTFs.includes(tf))autoTFs.push(tf)}else{autoTFs=autoTFs.filter(t=>t!==tf)};_set('savedAutoTFs',JSON.stringify(autoTFs));updateServerConfig();}
+function toggleAutoTF(btn){btn.classList.toggle('active');const tf=btn.dataset.tf;if(btn.classList.contains('active')){if(!autoTFs.includes(tf))autoTFs.push(tf)}else{autoTFs=autoTFs.filter(t=>t!==tf)}}
 
 function toggleAuto(){
   if(autoMode){stopAuto();return}
@@ -896,69 +694,36 @@ async function runAutoCheck(){
   const maxLoss=capital*(parseFloat(document.getElementById('maxDailyLoss').value)||3)/100;
   const minConf=parseInt(document.getElementById('minConfidence').value)||70;
   const requireMTF=document.getElementById('requireMTF').checked;
-  if(dailyPnl>=maxGain){
-    const msg=`✅ LÍMITE DE GANANCIA ALCANZADO\n💰 Ganancia del día: +$${dailyPnl.toFixed(2)}\n🛑 Bot detenido automáticamente`;
-    addAutoLog(`✅ Límite de ganancia alcanzado ($${dailyPnl.toFixed(2)})`);
-    fetch(BACKEND_URL+'/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})}).catch(()=>{});
-    stopAuto();return}
-  if(dailyPnl<=-maxLoss){
-    const msg=`🛑 LÍMITE DE PÉRDIDA ALCANZADO\n📉 Pérdida del día: $${dailyPnl.toFixed(2)}\n🔒 Bot detenido para proteger tu capital`;
-    addAutoLog(`🛑 Límite de pérdida alcanzado ($${dailyPnl.toFixed(2)})`);
-    fetch(BACKEND_URL+'/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})}).catch(()=>{});
-    stopAuto();return}
-  
-  // Analyze all pairs and timeframes
-  let allSignals=[];
-  const pairsToCheck = autoPairs.length > 0 ? autoPairs : ['BTCUSDT'];
-  
-  for(const p of pairsToCheck){
-    let signals=[];
-    for(const tf of autoTFs){
-      try{
-        const{closes,highs,lows}=await fetchKlines(p,tf,100);
-        const a=analyze(closes,highs,lows);
-        if(a)signals.push({tf,pair:p,signal:a.signal,confidence:a.confidence,analysis:a});
-        addAutoLog(`📊 ${p.replace('USDT','')} ${tf.toUpperCase()}: ${a?.signal||'?'} (${a?.confidence||0}%)`);
-      }catch(e){}
-    }
-    // Check consensus for this pair
-    const buys=signals.filter(s=>s.signal==='COMPRAR'&&s.confidence>=minConf);
-    const sells=signals.filter(s=>s.signal==='VENDER'&&s.confidence>=minConf);
-    const threshold=requireMTF?2:1;
-    if(buys.length>=threshold){
-      const best=buys.sort((a,b)=>b.confidence-a.confidence)[0];
-      allSignals.push({...best,direction:'COMPRAR',score:buys.length*best.confidence});
-    }else if(sells.length>=threshold){
-      const best=sells.sort((a,b)=>b.confidence-a.confidence)[0];
-      allSignals.push({...best,direction:'VENDER',score:sells.length*best.confidence});
-    }
+  // Check daily limits
+  if(dailyPnl>=maxGain){addAutoLog(`✅ Límite de ganancia alcanzado ($${dailyPnl.toFixed(2)})`);stopAuto();return}
+  if(dailyPnl<=-maxLoss){addAutoLog(`🛑 Límite de pérdida alcanzado ($${dailyPnl.toFixed(2)})`);stopAuto();return}
+  // Analyze each TF
+  let signals=[];
+  for(const tf of autoTFs){
+    try{
+      const{closes,highs,lows}=await fetchKlines(pair,tf,100);
+      const a=analyze(closes,highs,lows);
+      if(a)signals.push({tf,signal:a.signal,confidence:a.confidence,analysis:a});
+      addAutoLog(`📊 ${tf.toUpperCase()}: ${a?.signal||'?'} (${a?.confidence||0}%)`);
+    }catch(e){}
   }
-  
-  // Pick the best signal across all pairs
-  let signals = allSignals;
   // Check consensus
   const buySignals=signals.filter(s=>s.signal==='COMPRAR'&&s.confidence>=minConf);
   const sellSignals=signals.filter(s=>s.signal==='VENDER'&&s.confidence>=minConf);
   const threshold=requireMTF?2:1;
   if(!openTrade){
-    const buySignals=allSignals.filter(s=>s.direction==='COMPRAR');
-    const sellSignals=allSignals.filter(s=>s.direction==='VENDER');
-    if(buySignals.length>0){
-      const best=buySignals.sort((a,b)=>b.score-a.score)[0];
-      analysis=best.analysis;currentTF=best.tf;pair=best.pair;
-      document.getElementById('pairSelect').value=best.pair;
+    if(buySignals.length>=threshold){
+      const best=buySignals.sort((a,b)=>b.confidence-a.confidence)[0];
+      analysis=best.analysis;currentTF=best.tf;
       openPaperTrade();
-      addAutoLog(`🟢 COMPRA automática ${best.pair.replace('USDT','')} · TF:${best.tf} · Conf:${best.confidence}%`);
-      fetch(BACKEND_URL+'/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`🟢 COMPRA AUTO\n📊 ${best.pair.replace('USDT','/USDT')}\n⏱ TF: ${best.tf}\n🎯 Confianza: ${best.confidence}%\n💵 Entrada: $${best.analysis.price?.toFixed(2)||'?'}`})}).catch(()=>{});
-    }else if(sellSignals.length>0){
-      const best=sellSignals.sort((a,b)=>b.score-a.score)[0];
-      analysis=best.analysis;currentTF=best.tf;pair=best.pair;
-      document.getElementById('pairSelect').value=best.pair;
+      addAutoLog(`🟢 COMPRA automática ${pair} · TF:${best.tf} · Conf:${best.confidence}%`);
+    }else if(sellSignals.length>=threshold){
+      const best=sellSignals.sort((a,b)=>b.confidence-a.confidence)[0];
+      analysis=best.analysis;currentTF=best.tf;
       openPaperTrade();
-      addAutoLog(`🔴 VENTA automática ${best.pair.replace('USDT','')} · TF:${best.tf} · Conf:${best.confidence}%`);
-      fetch(BACKEND_URL+'/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`🔴 VENTA AUTO\n📊 ${best.pair.replace('USDT','/USDT')} · ${best.tf.toUpperCase()}\n💵 Entrada: $${best.analysis.entry?.toFixed(2)||'?'}\n🎯 Take Profit: $${best.analysis.tp?.toFixed(2)||'?'}\n🛑 Stop Loss: $${best.analysis.sl?.toFixed(2)||'?'}\n📊 R/R: 1:${best.analysis.rr?.toFixed(2)||'?'}\n🎯 Confianza: ${best.confidence}%`})}).catch(()=>{});
+      addAutoLog(`🔴 VENTA automática ${pair} · TF:${best.tf} · Conf:${best.confidence}%`);
     }else{
-      addAutoLog(`⏳ Sin señal en ${pairsToCheck.map(p=>p.replace('USDT','')).join(', ')} — esperando...`);
+      addAutoLog(`⏳ Sin señal suficiente — esperando...`);
     }
   }else{
     // Check if should close
@@ -967,11 +732,9 @@ async function runAutoCheck(){
       const currentPrice=closes[closes.length-1];
       if(openTrade.signal==='COMPRAR'&&currentPrice>=openTrade.tp){
         analysis={...analysis,price:currentPrice};closePaperTrade('TP Auto');
-        playAlert('tp');
         addAutoLog(`✅ TP alcanzado automáticamente`);
       }else if(openTrade.signal==='COMPRAR'&&currentPrice<=openTrade.sl){
         analysis={...analysis,price:currentPrice};closePaperTrade('SL Auto');
-        playAlert('sl');
         addAutoLog(`🛑 SL alcanzado automáticamente`);
       }else if(openTrade.signal==='VENDER'&&currentPrice<=openTrade.tp){
         analysis={...analysis,price:currentPrice};closePaperTrade('TP Auto');
@@ -1034,73 +797,12 @@ function calcPositionSize(){
 }
 
 // ── Export ────────────────────────────────────────────────
-function exportTradesCSV(){
-  const fecha = new Date().toLocaleDateString('es-AR').replace(/\//g,'-');
-  const headers = ['Fecha','Apertura','Cierre','Par','Señal','Dirección','TF','Confianza','EntradaUSD','SalidaUSD','SLUSD','TPUSD','PnLUSD','PnLPct','Razon','Tipo','CapAntes','CapDespues'];
-  const capFinal = parseFloat(_get('capital')||1000);
-  const totalPnlCalc = trades.reduce((a,t)=>a+t.pnl,0);
-  let capAcum = capFinal - totalPnlCalc;
-  if(capAcum < 0 || capAcum > 100000) capAcum = INITIAL_CAPITAL;
-  const rows = [...trades].reverse().map(t=>{
-    const ca=capAcum; capAcum+=t.pnl;
-    // Use plain numbers with dots, no thousand separators, no currency symbols - safe for any locale
-    return [fecha,t.openTime||'',t.closeTime||'',t.pair||'',t.signal||'',t.direction||'',t.tf||'?',
-      t.confidence||0,
-      (t.entry||0).toFixed(4),
-      (t.exitPrice||0).toFixed(4),
-      (t.sl||0).toFixed(4),
-      (t.tp||0).toFixed(4),
-      (t.pnl||0).toFixed(2),
-      ((t.pnlPct||0)/100).toFixed(4),
-      t.reason||'',t.auto?'AUTO':'MANUAL',
-      ca.toFixed(2),
-      capAcum.toFixed(2)
-    ].join(',');
-  });
-  const csv = [headers.join(','), ...rows].join('\n');
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'trades_'+fecha+'.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 function exportTrades(){
-  const fecha = new Date().toLocaleDateString('es-AR').replace(/\/\//g,'-');
-  if(typeof XLSX === 'undefined'){alert('Cargando Excel, intentá de nuevo en 2 segundos');return;}
-  const wb = XLSX.utils.book_new();
-  const headers = ['Fecha','Apertura','Cierre','Par','Señal','Dirección','TF','Confianza%','Entrada$','Salida$','SL$','TP$','PnL$','PnL%','Razón','Tipo','Cap.Antes','Cap.Después'];
-  const capFinal = parseFloat(_get('capital')||1000);
-  const totalPnlCalc = trades.reduce((a,t)=>a+t.pnl,0);
-  let capAcum = capFinal - totalPnlCalc;
-  if(capAcum < 0 || capAcum > 100000) capAcum = INITIAL_CAPITAL;
-  const rows = [...trades].reverse().map(t=>{
-    const ca=capAcum; capAcum+=t.pnl;
-    return [fecha,t.openTime||'',t.closeTime||'',t.pair||'',t.signal||'',t.direction||'',t.tf||'?',
-      t.confidence||0,parseFloat(t.entry?.toFixed(4)||0),parseFloat(t.exitPrice?.toFixed(4)||0),
-      parseFloat(t.sl?.toFixed(4)||0),parseFloat(t.tp?.toFixed(4)||0),
-      parseFloat(t.pnl?.toFixed(2)||0),parseFloat((t.pnlPct/100)?.toFixed(4)||0),
-      t.reason||'',t.auto?'AUTO':'MANUAL',parseFloat(ca.toFixed(2)),parseFloat(capAcum.toFixed(2))];
-  });
-  const wsData = [headers,...rows];
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-  ws['!cols'] = [10,9,9,10,9,9,7,9,10,10,10,10,9,7,8,7,12,14].map(w=>({wch:w}));
-  const wins=trades.filter(t=>t.pnl>0).length;
-  const totalPnl=trades.reduce((a,t)=>a+t.pnl,0);
-  const cap=parseFloat(_get('capital')||1000);
-  const stats=[['ESTADÍSTICAS',''],['',''],['Capital inicial','$1,000.00'],['Capital actual','$'+cap.toFixed(2)],
-    ['P&L total',(totalPnl>=0?'+':'')+'$'+totalPnl.toFixed(2)],['Rendimiento %',((totalPnl/1000)*100).toFixed(2)+'%'],
-    ['Operaciones',trades.length],['Ganadas',wins],['Perdidas',trades.length-wins],
-    ['Win Rate',(trades.length>0?(wins/trades.length*100).toFixed(1):0)+'%'],
-    ['Mejor op','$'+(trades.length>0?Math.max(...trades.map(t=>t.pnl)).toFixed(2):'0.00')],
-    ['Peor op','$'+(trades.length>0?Math.min(...trades.map(t=>t.pnl)).toFixed(2):'0.00')]];
-  const ws2=XLSX.utils.aoa_to_sheet(stats);
-  ws2['!cols']=[{wch:22},{wch:16}];
-  XLSX.utils.book_append_sheet(wb,ws,'Trades');
-  XLSX.utils.book_append_sheet(wb,ws2,'Estadísticas');
-  XLSX.writeFile(wb,'trading_journal_'+fecha+'.xlsx');
+  const csv='Par,Señal,TF,Entrada,Salida,PnL,PnL%,Razón,Apertura,Cierre\n'+
+    trades.map(t=>`${t.pair},${t.signal},${t.tf||'?'},${t.entry},${t.exitPrice},${t.pnl.toFixed(2)},${t.pnlPct.toFixed(2)},${t.reason},${t.openTime},${t.closeTime}`).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='trades.csv';a.click();
 }
 
 // ── Auto Check for SL/TP ─────────────────────────────────
@@ -1114,6 +816,95 @@ function checkAutoTrade(){
     if(price<=openTrade.tp){closePaperTrade('TP Auto')}
     else if(price>=openTrade.sl){closePaperTrade('SL Auto')}
   }
+}
+
+// ── Server-backed AUTO (backend real 24/7) ────────────────
+const BACKEND_URL='https://trading-backend-x7dw.onrender.com';
+let serverPollInterval=null;
+
+async function fetchServerState(){
+  try{
+    const res=await fetch(BACKEND_URL+'/state');
+    const s=await res.json();
+    renderServerState(s);
+    return s;
+  }catch(e){
+    document.getElementById('serverAutoStatus').textContent='⚠ Sin conexión al servidor';
+    document.getElementById('serverAutoStatus').style.color='#ff3355';
+  }
+}
+
+async function toggleServerAuto(){
+  const btn=document.getElementById('serverAutoBtn');
+  btn.disabled=true;btn.textContent='...';
+  try{
+    await fetch(BACKEND_URL+'/state/toggle-auto',{method:'POST'});
+    await fetchServerState();
+  }catch(e){
+    alert('Error conectando al servidor: '+e.message);
+  }
+  btn.disabled=false;
+}
+
+function renderServerState(s){
+  if(!s)return;
+  document.getElementById('serverAutoStatus').textContent=s.autoMode?'🟢 ACTIVO (Servidor 24/7)':'⚪ INACTIVO';
+  document.getElementById('serverAutoStatus').style.color=s.autoMode?'#00ff88':'#666';
+  document.getElementById('serverAutoDot').style.background=s.autoMode?'#00ff88':'#333';
+  const btn=document.getElementById('serverAutoBtn');
+  btn.textContent=s.autoMode?'⏸ PAUSAR AUTO (Servidor)':'▶ ACTIVAR AUTO (Servidor)';
+  btn.className=s.autoMode?'btn btn-orange':'btn btn-blue';
+
+  document.getElementById('serverCapital').textContent='$'+s.capital.toFixed(2);
+  const pnlEl=document.getElementById('serverDailyPnl');
+  pnlEl.textContent=(s.dailyPnl>=0?'+':'')+'$'+s.dailyPnl.toFixed(2);
+  pnlEl.style.color=s.dailyPnl>=0?'#00ff88':'#ff3355';
+  document.getElementById('serverTradesCount').textContent=s.trades.length;
+
+  const streakEl=document.getElementById('serverStreak');
+  if(s.consecutiveLosses>=2){
+    streakEl.style.display='block';
+    streakEl.textContent='❄️ '+s.consecutiveLosses+' pérdidas seguidas';
+    streakEl.style.color='#ff3355';
+  }else{
+    streakEl.style.display='none';
+  }
+
+  const otEl=document.getElementById('serverOpenTrade');
+  if(s.openTrade){
+    const t=s.openTrade;
+    otEl.style.display='block';
+    otEl.innerHTML=`<div class="mini-card" style="text-align:left;padding:8px">
+      <div style="font-size:9px;color:#8888ff;margin-bottom:4px">🔵 OPERACIÓN ABIERTA (real, servidor)</div>
+      <div style="font-size:11px">${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf}</div>
+      <div style="font-size:10px;color:#666;margin-top:4px">Entrada $${t.entry} · TP $${t.tp?.toFixed?t.tp.toFixed(2):t.tp} · SL $${t.sl?.toFixed?t.sl.toFixed(2):t.sl}</div>
+      <div style="font-size:9px;color:#444;margin-top:2px">Confianza ${t.confidence}% · Abierto: ${t.openTime}</div>
+    </div>`;
+  }else{
+    otEl.style.display='none';
+  }
+
+  const listEl=document.getElementById('serverTradesList');
+  if(!s.trades||s.trades.length===0){
+    listEl.innerHTML='Sin operaciones cerradas aún';
+  }else{
+    listEl.innerHTML=[...s.trades].reverse().slice(0,10).map(t=>{
+      const c=t.pnl>=0?'#00ff88':'#ff3355';
+      return `<div class="trade-item" style="border-color:${c}33;padding:8px">
+        <div style="display:flex;justify-content:space-between">
+          <span>${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf}</span>
+          <span style="color:${c};font-weight:700">${t.pnl>=0?'+':''}$${t.pnl.toFixed(2)}</span>
+        </div>
+        <div style="color:#444;margin-top:3px">${t.reason} · ${t.closeTime}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function startServerPolling(){
+  fetchServerState();
+  if(serverPollInterval)clearInterval(serverPollInterval);
+  serverPollInterval=setInterval(fetchServerState,15000);
 }
 
 // ── Navigation ────────────────────────────────────────────
@@ -1130,14 +921,13 @@ function switchTab(tab){
 
 function setTF(tf,btn){
   currentTF=tf;
-  _set('savedTF',tf);
   document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   loadData();
 }
 
-function onPairChange(){pair=document.getElementById('pairSelect').value;_set('savedPair',pair);loadAllTimeframes()}
-function addCustomPair(){const v=document.getElementById('customPair').value.toUpperCase().replace(/\s/g,'');if(v.length>=5){pair=v;_set('savedPair',pair);document.getElementById('customPair').value='';loadAllTimeframes()}}
+function onPairChange(){pair=document.getElementById('pairSelect').value;loadAllTimeframes()}
+function addCustomPair(){const v=document.getElementById('customPair').value.toUpperCase().replace(/\s/g,'');if(v.length>=5){pair=v;document.getElementById('customPair').value='';loadAllTimeframes()}}
 
 function resetAll(){
   capital=INITIAL_CAPITAL;trades=[];openTrade=null;dailyPnl=0;dailyTrades=0;consecutiveLosses=0;
@@ -1145,301 +935,12 @@ function resetAll(){
   updateCapitalDisplay();renderTrades();renderStats();renderActionArea();updateAutoStats();stopAuto();
 }
 
-// ── Real Mode Functions ──────────────────────────────────
-let selectedPct = 5;
-
-function selectPct(btn) {
-  document.querySelectorAll('#pctSelector .tf-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  selectedPct = parseInt(btn.dataset.pct);
-}
-
-function saveApiKeys() {
-  const key = document.getElementById('apiKeyInput').value.trim();
-  const secret = document.getElementById('apiSecretInput').value.trim();
-  if (!key || !secret) { document.getElementById('connectionStatus').textContent = '⚠ Ingresá ambas claves'; return; }
-  apiKey = key; apiSecret = secret;
-  _set('apiKey', key); _set('apiSecret', secret);
-  document.getElementById('apiKeyInput').value = '';
-  document.getElementById('apiSecretInput').value = '';
-  document.getElementById('connectionStatus').textContent = '✓ Claves guardadas';
-  testConnection();
-}
-
-async function testConnection() {
-  if (!apiKey || !apiSecret) { document.getElementById('connectionStatus').textContent = '⚠ Primero guardá las claves'; return; }
-  document.getElementById('connectionStatus').textContent = '🔄 Probando conexión...';
-  document.getElementById('connectionStatus').style.color = '#888';
-  try {
-    const data = await backendPost('/balance', {apiKey, apiSecret});
-    if (data.usdt !== undefined) {
-      realBalance = data.usdt;
-      document.getElementById('connectionStatus').textContent = '✅ Conectado — Saldo: $' + data.usdt.toFixed(2) + ' USDT';
-      document.getElementById('connectionStatus').style.color = '#00ff88';
-      document.getElementById('realBalanceDisplay').textContent = '$' + data.usdt.toFixed(2) + ' USDT';
-      document.getElementById('realBalanceDisplay').style.display = 'block';
-    } else {
-      document.getElementById('connectionStatus').textContent = '✗ Error: ' + (data.error || 'Clave inválida');
-      document.getElementById('connectionStatus').style.color = '#ff3355';
-    }
-  } catch(e) {
-    document.getElementById('connectionStatus').textContent = '✗ Sin conexión al backend';
-    document.getElementById('connectionStatus').style.color = '#ff3355';
-  }
-}
-
-function toggleRealMode() {
-  isRealMode = document.getElementById('realModeToggle').checked;
-  const dot = document.getElementById('modeDot');
-  const label = document.getElementById('modeLabel');
-  const indicator = document.getElementById('modeIndicator');
-  if (isRealMode) {
-    if (!apiKey || !apiSecret) { 
-      document.getElementById('realModeToggle').checked = false;
-      isRealMode = false;
-      alert('Primero guardá tus claves de Binance');
-      return;
-    }
-    dot.style.background = '#ff8800'; dot.style.boxShadow = '0 0 8px #ff8800';
-    label.textContent = 'REAL'; label.style.color = '#ff8800'; label.style.borderColor = '#ff880044';
-    indicator.textContent = 'REAL · SALDO BINANCE';
-    fetchRealBalance();
-  } else {
-    dot.style.background = '#00ff88'; dot.style.boxShadow = '0 0 8px #00ff88';
-    label.textContent = 'DEMO'; label.style.color = '#00ff8866'; label.style.borderColor = '#00ff8822';
-    indicator.textContent = 'DEMO · CAPITAL';
-    document.getElementById('realBalanceDisplay').style.display = 'none';
-  }
-}
-
-async function executeRealOrder() {
-  if (!analysis || analysis.signal === 'NEUTRO') return;
-  if (!apiKey || !apiSecret) { alert('Configurá las claves de Binance primero'); return; }
-  if (!realBalance) { await fetchRealBalance(); }
-  const side = analysis.signal === 'COMPRAR' ? 'BUY' : 'SELL';
-  const budget = realBalance * selectedPct / 100;
-  const qty = (budget / analysis.price).toFixed(5);
-  if (!confirm(`⚠ ORDEN REAL\n${side} ${qty} ${pair.replace('USDT','')}\nPrecio: ~$${analysis.price}\nValor: ~$${budget.toFixed(2)} USDT\n\n¿Confirmar?`)) return;
-  const result = await placeRealOrder(side, qty);
-  if (result.success) {
-    alert(`✅ Orden ejecutada\nID: ${result.orderId}\nCantidad: ${result.executedQty}`);
-    fetchRealBalance();
-  } else {
-    alert(`✗ Error: ${result.error}`);
-  }
-}
-
-// ── Daily Summary ────────────────────────────────────────
-function sendDailySummary(){
-  const todayTrades=trades.filter(t=>t.closeTime&&new Date().toLocaleDateString('es-AR')===new Date().toLocaleDateString('es-AR'));
-  const wins=trades.filter(t=>t.pnl>0).length;
-  const losses=trades.filter(t=>t.pnl<0).length;
-  const winRate=trades.length>0?Math.round(wins/trades.length*100):0;
-  const capActual=parseFloat(_get('capital'))||1000;
-  let motivacion='';
-  if(dailyPnl>0&&winRate>=60)motivacion='🚀 Excelente día! Seguí así, campeón!';
-  else if(dailyPnl>0)motivacion='🟢 Buen día! De a poco se llega lejos.';
-  else if(dailyPnl<0&&losses>=3)motivacion='💪 Dale vos podés! Mañana es otro día.';
-  else if(dailyPnl<0)motivacion='🔴 Día difícil. Revisá las señales y descansá.';
-  else motivacion='⚪ Día tranquilo. El mercado espera su momento.';
-  const msg=`📊 RESUMEN DIARIO\n` +
-    `📅 ${new Date().toLocaleDateString('es-AR')}\n\n` +
-    `💰 Capital actual: $${capActual.toFixed(2)}\n` +
-    `📈 P&L hoy: ${dailyPnl>=0?'+':''}$${dailyPnl.toFixed(2)}\n` +
-    `🎯 Operaciones hoy: ${dailyTrades}\n` +
-    `✅ Ganadas: ${wins}\n` +
-    `❌ Perdidas: ${losses}\n` +
-    `📊 Win Rate: ${winRate}%\n\n` +
-    motivacion;
-  fetch(BACKEND_URL+'/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})}).catch(()=>{});
-  // Reset daily stats
-  dailyPnl=0;dailyTrades=0;
-  _set('dailyPnl','0');_set('dailyTrades','0');
-  updateAutoStats();
-}
-
-function scheduleDailySummary(localHour=22){
-  // Convert local Argentina hour (UTC-3) to UTC
-  const utcHour=(localHour+3)%24;
-  const now=new Date();
-  const next=new Date();
-  next.setUTCHours(utcHour,0,0,0);
-  if(next<=now)next.setUTCDate(next.getUTCDate()+1);
-  const ms=next-now;
-  setTimeout(()=>{
-    sendDailySummary();
-    setInterval(sendDailySummary,24*60*60*1000);
-  },ms);
-  const horasRestantes=Math.round(ms/3600000);
-  console.log(`Resumen diario programado para las ${localHour}:00 hs Argentina (en ${horasRestantes}hs)`);
-}
-
-// ── Sound Alert ──────────────────────────────────────────
-function playAlert(type='signal'){
-  try{
-    const ctx=new(window.AudioContext||window.webkitAudioContext)();
-    const osc=ctx.createOscillator();
-    const gain=ctx.createGain();
-    osc.connect(gain);gain.connect(ctx.destination);
-    if(type==='signal'){
-      osc.frequency.setValueAtTime(880,ctx.currentTime);
-      osc.frequency.setValueAtTime(1100,ctx.currentTime+0.1);
-      osc.frequency.setValueAtTime(880,ctx.currentTime+0.2);
-      gain.gain.setValueAtTime(0.3,ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.4);
-      osc.start(ctx.currentTime);osc.stop(ctx.currentTime+0.4);
-    }else if(type==='tp'){
-      osc.frequency.setValueAtTime(523,ctx.currentTime);
-      osc.frequency.setValueAtTime(659,ctx.currentTime+0.15);
-      osc.frequency.setValueAtTime(784,ctx.currentTime+0.3);
-      gain.gain.setValueAtTime(0.3,ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.5);
-      osc.start(ctx.currentTime);osc.stop(ctx.currentTime+0.5);
-    }else if(type==='sl'){
-      osc.frequency.setValueAtTime(400,ctx.currentTime);
-      osc.frequency.setValueAtTime(300,ctx.currentTime+0.2);
-      gain.gain.setValueAtTime(0.3,ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.4);
-      osc.start(ctx.currentTime);osc.stop(ctx.currentTime+0.4);
-    }
-  }catch(e){}
-}
-
-// ── Server-backed AUTO (connects to persistent backend) ────
-let serverState = null;
-let serverPollInterval = null;
-
-async function fetchServerState() {
-  try {
-    const res = await fetch(BACKEND_URL + '/state');
-    const data = await res.json();
-    serverState = data;
-    renderServerAutoUI();
-    return data;
-  } catch(e) {
-    console.log('Error fetching server state:', e);
-    return null;
-  }
-}
-
-async function toggleServerAuto() {
-  try {
-    const res = await fetch(BACKEND_URL + '/state/toggle-auto', { method: 'POST' });
-    const data = await res.json();
-    await fetchServerState();
-  } catch(e) {
-    alert('Error conectando al servidor: ' + e.message);
-  }
-}
-
-async function updateServerConfig() {
-  const config = {
-    autoPairs: autoPairs,
-    autoTFs: autoTFs,
-    minConfidence: parseInt(document.getElementById('minConfidence').value) || 70,
-    requireMTF: document.getElementById('requireMTF').checked,
-    maxDailyGainPct: parseFloat(document.getElementById('maxDailyGain').value) || 5,
-    maxDailyLossPct: parseFloat(document.getElementById('maxDailyLoss').value) || 3
-  };
-  try {
-    await fetch(BACKEND_URL + '/state/config', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(config)
-    });
-    await fetchServerState();
-  } catch(e) {
-    console.log('Error updating config:', e);
-  }
-}
-
-function renderServerAutoUI() {
-  if (!serverState) return;
-  const s = serverState;
-  
-  // Update status indicator
-  const statusEl = document.getElementById('serverAutoStatus');
-  const dotEl = document.getElementById('serverAutoDot');
-  const btnEl = document.getElementById('serverAutoBtn');
-  if (statusEl) {
-    statusEl.textContent = s.autoMode ? '🟢 ACTIVO (Servidor 24/7)' : '⚪ INACTIVO';
-    statusEl.style.color = s.autoMode ? '#00ff88' : '#666';
-  }
-  if (dotEl) dotEl.style.background = s.autoMode ? '#00ff88' : '#333';
-  if (btnEl) {
-    btnEl.textContent = s.autoMode ? '⏸ PAUSAR AUTO (Servidor)' : '▶ ACTIVAR AUTO (Servidor)';
-    btnEl.className = s.autoMode ? 'btn btn-orange' : 'btn btn-blue';
-  }
-  
-  // Update capital display from server (source of truth)
-  const capEl = document.getElementById('serverCapital');
-  if (capEl) capEl.textContent = '$' + s.capital.toFixed(2);
-  
-  const dailyEl = document.getElementById('serverDailyPnl');
-  if (dailyEl) {
-    dailyEl.textContent = (s.dailyPnl >= 0 ? '+' : '') + '$' + s.dailyPnl.toFixed(2);
-    dailyEl.style.color = s.dailyPnl >= 0 ? '#00ff88' : '#ff3355';
-  }
-  
-  const tradesEl = document.getElementById('serverTradesCount');
-  if (tradesEl) tradesEl.textContent = s.trades.length;
-  
-  const streakEl = document.getElementById('serverStreak');
-  if (streakEl) {
-    if (s.consecutiveLosses >= 2) {
-      streakEl.textContent = '❄️ ' + s.consecutiveLosses + ' pérdidas seguidas';
-      streakEl.style.color = '#ff3355';
-      streakEl.style.display = 'block';
-    } else {
-      streakEl.style.display = 'none';
-    }
-  }
-  
-  // Update capital in main header too, to avoid confusion
-  const mainCapEl = document.getElementById('capitalDisplay');
-  if (mainCapEl && !isRealMode) {
-    mainCapEl.textContent = '$' + s.capital.toFixed(2) + ' (servidor)';
-  }
-}
-
-function startServerPolling() {
-  fetchServerState();
-  if (serverPollInterval) clearInterval(serverPollInterval);
-  serverPollInterval = setInterval(fetchServerState, 15000); // poll every 15s
-}
-
 // ── Init ──────────────────────────────────────────────────
-// Restore saved settings
-const savedPair = _get('savedPair');
-const savedTF = _get('savedTF');
-const savedAutoTFs = _get('savedAutoTFs');
-const savedAutoPairs = _get('savedAutoPairs');
-
-if(savedPair) {
-  pair = savedPair;
-  const sel = document.getElementById('pairSelect');
-  if([...sel.options].some(o=>o.value===savedPair)) {
-    sel.value = savedPair;
-  }
-}
-if(savedTF) {
-  currentTF = savedTF;
-  document.querySelectorAll('.tf-btn').forEach(b=>{
-    if(b.textContent.toLowerCase()===savedTF.toLowerCase()||b.textContent===savedTF){
-      b.classList.add('active');
-    } else if(!b.dataset.pair) {
-      b.classList.remove('active');
-    }
-  });
-}
-
 updateCapitalDisplay();
 calcRisk();
 updateAutoStats();
 loadAllTimeframes();
 setInterval(loadData,60000);
-scheduleDailySummary(22);
 </script>
 </body>
 </html>
-
