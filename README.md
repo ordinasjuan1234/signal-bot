@@ -798,6 +798,16 @@ function renderServerState(s){
   btn.className=s.autoMode?'btn btn-orange':'btn btn-blue';
 
   document.getElementById('serverCapital').textContent='$'+s.capital.toFixed(2);
+  // Also update the main header capital to avoid confusion - server is the source of truth
+  const headerCapEl=document.getElementById('capitalDisplay');
+  if(headerCapEl){
+    headerCapEl.textContent='$'+s.capital.toFixed(2);
+    headerCapEl.style.color=s.capital>=1000?'#00ff88':'#ff3355';
+  }
+  const modeLabelEl=document.getElementById('modeLabel');
+  if(modeLabelEl){
+    modeLabelEl.textContent=s.autoMode?'SERVIDOR 24/7':'SERVIDOR';
+  }
   const pnlEl=document.getElementById('serverDailyPnl');
   pnlEl.textContent=(s.dailyPnl>=0?'+':'')+'$'+s.dailyPnl.toFixed(2);
   pnlEl.style.color=s.dailyPnl>=0?'#00ff88':'#ff3355';
@@ -904,6 +914,9 @@ updateCapitalDisplay();
 calcRisk();
 loadAllTimeframes();
 setInterval(loadData,60000);
+// Start polling server state immediately so header shows real capital from the start
+fetchServerState();
+setInterval(fetchServerState,15000);
 </script>
 </body>
 </html>
