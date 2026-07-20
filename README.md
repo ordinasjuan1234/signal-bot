@@ -253,6 +253,22 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
       <div style="font-size:9px;color:#333;line-height:1.5">✓ Configuración validada por backtest: BTC+ETH en 4h dieron resultados positivos en 180 días de datos históricos reales.</div>
     </div>
 
+    <div class="card" style="border-color:#ff880033">
+      <div class="card-label" style="color:#ff8800">⚡ MODO REAL — BINANCE</div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:10px;color:#555;margin-bottom:4px">API Key</div>
+        <input type="password" id="apiKeyInput" placeholder="Tu API Key de Binance" style="width:100%;margin-bottom:6px" value="">
+        <div style="font-size:10px;color:#555;margin-bottom:4px">Secret Key</div>
+        <input type="password" id="apiSecretInput" placeholder="Tu Secret Key de Binance" style="width:100%;margin-bottom:8px" value="">
+        <div style="display:flex;gap:6px">
+          <button onclick="saveApiKeys()" class="btn btn-orange" style="flex:2;padding:10px 0">💾 Guardar claves</button>
+          <button onclick="testConnection()" class="btn btn-blue" style="flex:1;padding:10px 0">🔌 Probar</button>
+        </div>
+        <div id="connectionStatus" style="margin-top:8px;font-size:10px;color:#444;text-align:center"></div>
+      </div>
+      <div style="font-size:9px;color:#333;line-height:1.6">⚠ Estas claves se guardan solo en este navegador (cookies). El modo real automático 24/7 todavía corre en modo demo — la ejecución de órdenes reales en el servidor está pendiente de implementar.</div>
+    </div>
+
     <div class="card">
       <div class="card-label">RESUMEN DIARIO</div>
       <div style="display:flex;align-items:center;gap:8px">
@@ -661,6 +677,42 @@ function checkAutoTrade(){
   }else if(openTrade.signal==='VENDER'){
     if(price<=openTrade.tp){closePaperTrade('TP Auto')}
     else if(price>=openTrade.sl){closePaperTrade('SL Auto')}
+  }
+}
+
+// ── Real Mode API Keys (stored locally, for future backend integration) ──
+let apiKey=_get('apiKey')||'';
+let apiSecret=_get('apiSecret')||'';
+
+function saveApiKeys(){
+  const key=document.getElementById('apiKeyInput').value.trim();
+  const secret=document.getElementById('apiSecretInput').value.trim();
+  if(!key||!secret){document.getElementById('connectionStatus').textContent='⚠ Ingresá ambas claves';return}
+  apiKey=key;apiSecret=secret;
+  _set('apiKey',key);_set('apiSecret',secret);
+  document.getElementById('apiKeyInput').value='';
+  document.getElementById('apiSecretInput').value='';
+  document.getElementById('connectionStatus').textContent='✓ Claves guardadas';
+  testConnection();
+}
+
+async function testConnection(){
+  if(!apiKey||!apiSecret){document.getElementById('connectionStatus').textContent='⚠ Primero guardá las claves';return}
+  document.getElementById('connectionStatus').textContent='🔄 Probando conexión...';
+  document.getElementById('connectionStatus').style.color='#888';
+  try{
+    const res=await fetch(BACKEND_URL+'/balance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey,apiSecret})});
+    const data=await res.json();
+    if(data.usdt!==undefined){
+      document.getElementById('connectionStatus').textContent='✅ Conectado — Saldo: $'+data.usdt.toFixed(2)+' USDT';
+      document.getElementById('connectionStatus').style.color='#00ff88';
+    }else{
+      document.getElementById('connectionStatus').textContent='✗ Error: '+(data.error||'Clave inválida');
+      document.getElementById('connectionStatus').style.color='#ff3355';
+    }
+  }catch(e){
+    document.getElementById('connectionStatus').textContent='✗ Sin conexión al backend';
+    document.getElementById('connectionStatus').style.color='#ff3355';
   }
 }
 
