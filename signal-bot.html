@@ -746,24 +746,46 @@ function calcPositionSize(){
   document.getElementById('posValue').textContent='$'+posVal;
 }
 
-// ── Export ────────────────────────────────────────────────
+// ── Export (full format matching Journal Maestro in Google Sheets) ──
 function exportTrades(){
-  const csv='Par,Señal,TF,Entrada,Salida,PnL,PnL%,Razón,Apertura,Cierre\n'+
-    trades.map(t=>`${t.pair},${t.signal},${t.tf||'?'},${t.entry},${t.exitPrice},${t.pnl.toFixed(2)},${t.pnlPct.toFixed(2)},${t.reason},${t.openTime},${t.closeTime}`).join('\n');
-  const blob=new Blob([csv],{type:'text/csv'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download='trades.csv';a.click();
+  const fecha = new Date().toLocaleDateString('es-AR').replace(/\//g,'-');
+  const headers = ['Fecha','Apertura','Cierre','Par','Señal','Dirección','TF','Confianza','EntradaUSD','SalidaUSD','SLUSD','TPUSD','PnLUSD','PnLPct','Razon','Tipo','CapAntes','CapDespues'];
+  const capFinal = parseFloat(_get('capital')||1000);
+  const totalPnlCalc = trades.reduce((a,t)=>a+t.pnl,0);
+  let capAcum = capFinal - totalPnlCalc;
+  if(capAcum < 0 || capAcum > 100000) capAcum = INITIAL_CAPITAL;
+  const rows = [...trades].reverse().map(t=>{
+    const ca=capAcum; capAcum+=t.pnl;
+    return [fecha,t.openTime||'',t.closeTime||'',t.pair||'',t.signal||'',t.direction||'',t.tf||'?',
+      t.confidence||0,
+      (t.entry||0).toFixed(4),
+      (t.exitPrice||0).toFixed(4),
+      (t.sl||0).toFixed(4),
+      (t.tp||0).toFixed(4),
+      (t.pnl||0).toFixed(2),
+      ((t.pnlPct||0)/100).toFixed(4),
+      t.reason||'',t.auto?'AUTO':'MANUAL',
+      ca.toFixed(2),
+      capAcum.toFixed(2)
+    ].join(',');
+  });
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'trades_'+fecha+'.csv';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 // ── Server-backed AUTO (backend real 24/7) ────────────────
 let serverPollInterval=null;
-let lastServerState=null;
 
 async function fetchServerState(){
   try{
     const res=await fetch(BACKEND_URL+'/state');
     const s=await res.json();
-    lastServerState=s;
     renderServerState(s);
     return s;
   }catch(e){
@@ -773,7 +795,6 @@ async function fetchServerState(){
 }
 
 async function exportServerTrades(){
-  // Siempre trae el estado más fresco al momento de exportar, no el cacheado en pantalla
   const s=await fetchServerState();
   if(!s||!s.trades||s.trades.length===0){alert('No hay operaciones cerradas del servidor todavía.');return;}
   const csv='Par,Señal,TF,Entrada,Salida,PnL,PnL%,Razón,Apertura,Cierre,Confianza\n'+
@@ -841,7 +862,6 @@ function renderServerState(s){
   btn.className=s.autoMode?'btn btn-orange':'btn btn-blue';
 
   document.getElementById('serverCapital').textContent='$'+s.capital.toFixed(2);
-  // Also update the main header capital to avoid confusion - server is the source of truth
   const headerCapEl=document.getElementById('capitalDisplay');
   if(headerCapEl){
     headerCapEl.textContent='$'+s.capital.toFixed(2);
@@ -956,7 +976,6 @@ updateCapitalDisplay();
 calcRisk();
 loadAllTimeframes();
 setInterval(loadData,60000);
-// Start polling server state immediately so header shows real capital from the start
 fetchServerState();
 setInterval(fetchServerState,15000);
 </script>
