@@ -253,6 +253,15 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
           <span style="font-size:11px;color:#888">Solo operar cuando 2+ timeframes coinciden</span>
         </label>
       </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:10px;color:#555;margin-bottom:4px">Tamaño de posición (multi-posición: uno por par)</div>
+        <div style="display:flex;gap:4px" id="positionSizeSelector">
+          <button class="tf-btn" data-size="10" onclick="setPositionSize(this)">10%</button>
+          <button class="tf-btn" data-size="15" onclick="setPositionSize(this)">15%</button>
+          <button class="tf-btn active" data-size="20" onclick="setPositionSize(this)">20%</button>
+        </div>
+        <div style="font-size:9px;color:#333;margin-top:2px">% del capital por operación individual. Con BTC+ETH abiertos a la vez, la exposición total es el doble de este número.</div>
+      </div>
       <div style="font-size:9px;color:#333;line-height:1.5">✓ Configuración validada por backtest: BTC+ETH en 4h dieron resultados positivos en 180 días de datos históricos reales.</div>
     </div>
 
@@ -716,6 +725,14 @@ function toggleAutoTF(btn){
   updateServerConfig();
 }
 
+let positionSizePct=20;
+function setPositionSize(btn){
+  document.querySelectorAll('#positionSizeSelector .tf-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  positionSizePct=parseInt(btn.dataset.size);
+  updateServerConfig();
+}
+
 // ── Risk Calculator ───────────────────────────────────────
 function calcRisk(){
   const cap=parseFloat(document.getElementById('riskCapital').value)||1000;
@@ -784,7 +801,7 @@ let serverPollInterval=null;
 
 async function fetchServerState(){
   try{
-    const res=await fetch(BACKEND_URL+'/state');
+    const res=await fetch(BACKEND_URL+'/state?_t='+Date.now(),{cache:'no-store'});
     const s=await res.json();
     renderServerState(s);
     return s;
@@ -797,29 +814,13 @@ async function fetchServerState(){
 async function exportServerTrades(){
   const s=await fetchServerState();
   if(!s||!s.trades||s.trades.length===0){alert('No hay operaciones cerradas del servidor todavía.');return;}
-  const csv='Par,Señal,TF,Entrada,Salida,PnL,PnL%,Razón,Apertura,Cierre,Confianza\n'+
-    s.trades.map(t=>`${t.pair},${t.signal},${t.tf||'?'},${t.entry},${t.exitPrice},${t.pnl.toFixed(2)},${t.pnlPct.toFixed(2)},${t.reason},${t.openTime},${t.closeTime},${t.confidence}`).join('\n');
+  const csv='Par,Señal,TF,Entrada,Salida,PnL,PnL%,Razón,Apertura,Cierre,Confianza,Estrategia\n'+
+    s.trades.map(t=>`${t.pair},${t.signal},${t.tf||'?'},${t.entry},${t.exitPrice},${t.pnl.toFixed(2)},${t.pnlPct.toFixed(2)},${t.reason},${t.openTime},${t.closeTime},${t.confidence},${t.strategy||'Reversión (histórico)'}`).join('\n');
   const blob=new Blob([csv],{type:'text/csv'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   const fecha=new Date().toISOString().slice(0,10);
   a.href=url;a.download=`trades-servidor-${fecha}.csv`;a.click();
-}
-
-async function closeServerTradeManually(){
-  if(!confirm('¿Cerrar la operación abierta al precio actual del mercado?'))return;
-  try{
-    const res=await fetch(BACKEND_URL+'/state/close-trade',{method:'POST'});
-    const data=await res.json();
-    if(data.success){
-      alert('Operación cerrada al precio: $'+data.closedAt.toFixed(2));
-      await fetchServerState();
-    }else{
-      alert('Error: '+(data.error||'No se pudo cerrar'));
-    }
-  }catch(e){
-    alert('Error conectando al servidor: '+e.message);
-  }
 }
 
 async function toggleServerAuto(){
@@ -834,6 +835,22 @@ async function toggleServerAuto(){
   btn.disabled=false;
 }
 
+async function closeServerTradeManual(pair){
+  if(!confirm(`¿Cerrar la operación de ${pair.replace('USDT','')} ahora, a precio de mercado?`))return;
+  try{
+    const res=await fetch(BACKEND_URL+'/state/close-trade',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({pair})
+    });
+    const data=await res.json();
+    if(data.error){alert('Error: '+data.error);}
+    await fetchServerState();
+  }catch(e){
+    alert('Error conectando al servidor: '+e.message);
+  }
+}
+
 async function updateServerConfig(){
   const config={
     autoPairs:autoPairs,
@@ -841,7 +858,8 @@ async function updateServerConfig(){
     minConfidence:parseInt(document.getElementById('minConfidence').value)||70,
     requireMTF:document.getElementById('requireMTF').checked,
     maxDailyGainPct:parseFloat(document.getElementById('maxDailyGain').value)||5,
-    maxDailyLossPct:parseFloat(document.getElementById('maxDailyLoss').value)||3
+    maxDailyLossPct:parseFloat(document.getElementById('maxDailyLoss').value)||3,
+    positionSizePct:positionSizePct
   };
   try{
     await fetch(BACKEND_URL+'/state/config',{
@@ -902,16 +920,16 @@ function renderServerState(s){
   }
 
   const otEl=document.getElementById('serverOpenTrade');
-  if(s.openTrade){
-    const t=s.openTrade;
+  const openTrades=s.openTrades||(s.openTrade?[s.openTrade]:[]); // compat por si el backend viejo aún manda singular
+  if(openTrades.length>0){
     otEl.style.display='block';
-    otEl.innerHTML=`<div class="mini-card" style="text-align:left;padding:8px">
-      <div style="font-size:9px;color:#8888ff;margin-bottom:4px">🔵 OPERACIÓN ABIERTA (real, servidor)</div>
+    otEl.innerHTML=openTrades.map(t=>`<div class="mini-card" style="text-align:left;padding:8px;margin-bottom:6px">
+      <div style="font-size:9px;color:#8888ff;margin-bottom:4px">🔵 OPERACIÓN ABIERTA (real, servidor) · ${t.strategy||'Reversión'}</div>
       <div style="font-size:11px">${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf}</div>
       <div style="font-size:10px;color:#666;margin-top:4px">Entrada $${t.entry} · TP $${t.tp?.toFixed?t.tp.toFixed(2):t.tp} · SL $${t.sl?.toFixed?t.sl.toFixed(2):t.sl}</div>
       <div style="font-size:9px;color:#444;margin-top:2px">Confianza ${t.confidence}% · Abierto: ${t.openTime}</div>
-      <button onclick="closeServerTradeManually()" class="btn btn-orange" style="width:100%;padding:6px 0;font-size:10px;margin-top:8px">✋ CERRAR AHORA (manual)</button>
-    </div>`;
+      <button onclick="closeServerTradeManual('${t.pair}')" class="btn btn-orange" style="width:100%;padding:7px 0;font-size:10px;margin-top:8px">✕ CERRAR ${t.pair.replace('USDT','')} AHORA</button>
+    </div>`).join('');
   }else{
     otEl.style.display='none';
   }
@@ -927,7 +945,7 @@ function renderServerState(s){
           <span>${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf}</span>
           <span style="color:${c};font-weight:700">${t.pnl>=0?'+':''}$${t.pnl.toFixed(2)}</span>
         </div>
-        <div style="color:#444;margin-top:3px">${t.reason} · ${t.closeTime}</div>
+        <div style="color:#444;margin-top:3px">${t.reason} · ${t.closeTime}${t.strategy?' · '+t.strategy:''}</div>
       </div>`;
     }).join('');
   }
@@ -942,6 +960,12 @@ function renderServerState(s){
     autoTFs=[...s.autoTFs];
     document.querySelectorAll('#autoTFSelector .tf-btn').forEach(b=>{
       b.classList.toggle('active', autoTFs.includes(b.dataset.tf));
+    });
+  }
+  if(s.positionSizePct!==undefined){
+    positionSizePct=s.positionSizePct;
+    document.querySelectorAll('#positionSizeSelector .tf-btn').forEach(b=>{
+      b.classList.toggle('active', parseInt(b.dataset.size)===positionSizePct);
     });
   }
   if(s.minConfidence!==undefined){
