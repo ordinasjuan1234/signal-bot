@@ -814,8 +814,8 @@ async function fetchServerState(){
 async function exportServerTrades(){
   const s=await fetchServerState();
   if(!s||!s.trades||s.trades.length===0){alert('No hay operaciones cerradas del servidor todavía.');return;}
-  const csv='Par,Señal,TF,Entrada,Salida,PnL,PnL%,Razón,Apertura,Cierre,Confianza\n'+
-    s.trades.map(t=>`${t.pair},${t.signal},${t.tf||'?'},${t.entry},${t.exitPrice},${t.pnl.toFixed(2)},${t.pnlPct.toFixed(2)},${t.reason},${t.openTime},${t.closeTime},${t.confidence}`).join('\n');
+  const csv='Par,Señal,TF,Entrada,Salida,PnL,PnL%,Razón,Apertura,Cierre,Confianza,Estrategia\n'+
+    s.trades.map(t=>`${t.pair},${t.signal},${t.tf||'?'},${t.entry},${t.exitPrice},${t.pnl.toFixed(2)},${t.pnlPct.toFixed(2)},${t.reason},${t.openTime},${t.closeTime},${t.confidence},${t.strategy||'Reversión (histórico)'}`).join('\n');
   const blob=new Blob([csv],{type:'text/csv'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
@@ -924,7 +924,7 @@ function renderServerState(s){
   if(openTrades.length>0){
     otEl.style.display='block';
     otEl.innerHTML=openTrades.map(t=>`<div class="mini-card" style="text-align:left;padding:8px;margin-bottom:6px">
-      <div style="font-size:9px;color:#8888ff;margin-bottom:4px">🔵 OPERACIÓN ABIERTA (real, servidor)</div>
+      <div style="font-size:9px;color:#8888ff;margin-bottom:4px">🔵 OPERACIÓN ABIERTA (real, servidor) · ${t.strategy||'Reversión'}</div>
       <div style="font-size:11px">${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf}</div>
       <div style="font-size:10px;color:#666;margin-top:4px">Entrada $${t.entry} · TP $${t.tp?.toFixed?t.tp.toFixed(2):t.tp} · SL $${t.sl?.toFixed?t.sl.toFixed(2):t.sl}</div>
       <div style="font-size:9px;color:#444;margin-top:2px">Confianza ${t.confidence}% · Abierto: ${t.openTime}</div>
@@ -945,7 +945,7 @@ function renderServerState(s){
           <span>${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf}</span>
           <span style="color:${c};font-weight:700">${t.pnl>=0?'+':''}$${t.pnl.toFixed(2)}</span>
         </div>
-        <div style="color:#444;margin-top:3px">${t.reason} · ${t.closeTime}</div>
+        <div style="color:#444;margin-top:3px">${t.reason} · ${t.closeTime}${t.strategy?' · '+t.strategy:''}</div>
       </div>`;
     }).join('');
   }
