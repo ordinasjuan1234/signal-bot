@@ -806,6 +806,22 @@ async function exportServerTrades(){
   a.href=url;a.download=`trades-servidor-${fecha}.csv`;a.click();
 }
 
+async function closeServerTradeManually(){
+  if(!confirm('¿Cerrar la operación abierta al precio actual del mercado?'))return;
+  try{
+    const res=await fetch(BACKEND_URL+'/state/close-trade',{method:'POST'});
+    const data=await res.json();
+    if(data.success){
+      alert('Operación cerrada al precio: $'+data.closedAt.toFixed(2));
+      await fetchServerState();
+    }else{
+      alert('Error: '+(data.error||'No se pudo cerrar'));
+    }
+  }catch(e){
+    alert('Error conectando al servidor: '+e.message);
+  }
+}
+
 async function toggleServerAuto(){
   const btn=document.getElementById('serverAutoBtn');
   btn.disabled=true;btn.textContent='...';
@@ -894,6 +910,7 @@ function renderServerState(s){
       <div style="font-size:11px">${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf}</div>
       <div style="font-size:10px;color:#666;margin-top:4px">Entrada $${t.entry} · TP $${t.tp?.toFixed?t.tp.toFixed(2):t.tp} · SL $${t.sl?.toFixed?t.sl.toFixed(2):t.sl}</div>
       <div style="font-size:9px;color:#444;margin-top:2px">Confianza ${t.confidence}% · Abierto: ${t.openTime}</div>
+      <button onclick="closeServerTradeManually()" class="btn btn-orange" style="width:100%;padding:6px 0;font-size:10px;margin-top:8px">✋ CERRAR AHORA (manual)</button>
     </div>`;
   }else{
     otEl.style.display='none';
@@ -981,4 +998,3 @@ setInterval(fetchServerState,15000);
 </script>
 </body>
 </html>
-
