@@ -801,7 +801,7 @@ let serverPollInterval=null;
 
 async function fetchServerState(){
   try{
-    const res=await fetch(BACKEND_URL+'/state');
+    const res=await fetch(BACKEND_URL+'/state?_t='+Date.now(),{cache:'no-store'});
     const s=await res.json();
     renderServerState(s);
     return s;
