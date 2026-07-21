@@ -352,9 +352,8 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
     </div>
     <div style="font-size:9px;color:#333;margin-bottom:10px">Para ver las operaciones reales del servidor 24/7, andá a la pestaña AUTO.</div>
     <div id="tradesList"></div>
-  </div>
 
-    <div class="card" style="margin-bottom:10px">
+    <div class="card" style="margin-bottom:10px;margin-top:10px">
       <div class="card-label">RACHA ACTUAL</div>
       <div id="streakInfo" style="font-size:13px;color:#888;text-align:center;padding:8px"></div>
     </div>
@@ -620,7 +619,7 @@ function closePaperTrade(reason){
   updateCapitalDisplay();
   renderActionArea();
   renderTrades();
-  renderStats();
+  renderStreakInfo();
 }
 
 function updateCapitalDisplay(){
@@ -641,30 +640,12 @@ function renderTrades(){
   </div>`).join('');
 }
 
-function renderStats(){
-  const totalPnl=trades.reduce((a,t)=>a+t.pnl,0);
-  const wins=trades.filter(t=>t.pnl>0).length;
-  const losses=trades.filter(t=>t.pnl<0).length;
-  const winRate=trades.length>0?Math.round(wins/trades.length*100):0;
-  const avgWin=wins>0?trades.filter(t=>t.pnl>0).reduce((a,t)=>a+t.pnl,0)/wins:0;
-  const avgLoss=losses>0?Math.abs(trades.filter(t=>t.pnl<0).reduce((a,t)=>a+t.pnl,0)/losses):0;
-  const stats=[
-    {l:'Capital',v:'$'+capital.toFixed(2),c:capital>=INITIAL_CAPITAL?'#00ff88':'#ff3355'},
-    {l:'P&L total',v:(totalPnl>=0?'+':'')+'$'+totalPnl.toFixed(2),c:totalPnl>=0?'#00ff88':'#ff3355'},
-    {l:'Win rate',v:winRate+'%',c:winRate>=50?'#00ff88':'#ff8c00'},
-    {l:'Operaciones',v:trades.length,c:'#8888ff'},
-    {l:'Ganadas',v:wins,c:'#00ff88'},
-    {l:'Perdidas',v:losses,c:'#ff3355'},
-    {l:'Promedio ganancia',v:'$'+avgWin.toFixed(2),c:'#00ff88'},
-    {l:'Promedio pérdida',v:'-$'+avgLoss.toFixed(2),c:'#ff3355'},
-  ];
-  document.getElementById('statsGrid').innerHTML=stats.map(s=>`<div class="stat-card"><div style="font-size:9px;color:#444;margin-bottom:3px">${s.l}</div><div style="font-size:16px;font-weight:700;color:${s.c}">${s.v}</div></div>`).join('');
-  const tfGroups={};
-  trades.forEach(t=>{const tf=t.tf||'?';if(!tfGroups[tf])tfGroups[tf]={wins:0,total:0,pnl:0};tfGroups[tf].total++;if(t.pnl>0)tfGroups[tf].wins++;tfGroups[tf].pnl+=t.pnl});
-  document.getElementById('tfStats').innerHTML=Object.entries(tfGroups).map(([tf,d])=>`<div class="indicator-row"><span style="font-size:10px;color:#666">${tf.toUpperCase()}</span><span style="font-size:10px;color:#888">${d.wins}/${d.total} wins · ${(d.pnl>=0?'+':'')+'$'+d.pnl.toFixed(2)}</span></div>`).join('')||'<div style="font-size:10px;color:#333;text-align:center;padding:8px">Sin datos aún</div>';
+function renderStreakInfo(){
+  const el=document.getElementById('streakInfo');
+  if(!el)return;
   let streak=0,streakType='';
   for(const t of trades){if(t.pnl>0){if(streakType==='win')streak++;else{streak=1;streakType='win'}}else{if(streakType==='loss')streak++;else{streak=1;streakType='loss'}}break}
-  document.getElementById('streakInfo').textContent=trades.length===0?'Sin operaciones aún':`Racha actual: ${streak} ${streakType==='win'?'✅ ganadas':'❌ perdidas'} seguidas`;
+  el.textContent=trades.length===0?'Sin operaciones aún':`Racha actual: ${streak} ${streakType==='win'?'✅ ganadas':'❌ perdidas'} seguidas`;
 }
 
 // ── Auto Check for SL/TP (demo local) ─────────────────────
@@ -931,7 +912,7 @@ function switchTab(tab){
     document.getElementById('tab-'+t).style.display=t===tab?'block':'none';
     document.querySelectorAll('.tab')[i].classList.toggle('active',t===tab);
   });
-  if(tab==='trades')renderTrades();
+  if(tab==='trades'){renderTrades();renderStreakInfo();}
   if(tab==='auto')startServerPolling();
   if(tab==='risk')calcRisk();
 }
@@ -949,7 +930,7 @@ function addCustomPair(){const v=document.getElementById('customPair').value.toU
 function resetAll(){
   capital=INITIAL_CAPITAL;trades=[];openTrade=null;dailyPnl=0;dailyTrades=0;consecutiveLosses=0;
   _remove('capital');_remove('trades');_remove('openTrade');_remove('dailyPnl');_remove('dailyTrades');
-  updateCapitalDisplay();renderTrades();renderStats();renderActionArea();
+  updateCapitalDisplay();renderTrades();renderStreakInfo();renderActionArea();
 }
 
 // ── Init ──────────────────────────────────────────────────
