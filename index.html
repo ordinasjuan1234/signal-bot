@@ -799,6 +799,60 @@ function exportTrades(){
 // ── Server-backed AUTO (backend real 24/7) ────────────────
 let serverPollInterval=null;
 
+async function drawTradeChart(t){
+  const canvas=document.getElementById('chart-'+t.pair);
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const w=canvas.width,h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  try{
+    const res=await fetch(`https://data-api.binance.vision/api/v3/klines?symbol=${t.pair}&interval=${t.tf}&limit=50`);
+    const data=await res.json();
+    const closes=data.map(k=>parseFloat(k[4]));
+    if(closes.length===0)return;
+    const tpVal=typeof t.tp==='number'?t.tp:parseFloat(t.tp);
+    const slVal=typeof t.sl==='number'?t.sl:parseFloat(t.sl);
+    const entryVal=typeof t.entry==='number'?t.entry:parseFloat(t.entry);
+    const allVals=[...closes,tpVal,slVal,entryVal];
+    const min=Math.min(...allVals), max=Math.max(...allVals);
+    const range=(max-min)||1;
+    const pad=6;
+    const toY=v=>pad+(h-pad*2)-((v-min)/range)*(h-pad*2);
+
+    function hLine(v,color){
+      const y=toY(v);
+      ctx.strokeStyle=color;ctx.setLineDash([3,3]);ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    hLine(tpVal,'#00ff88');
+    hLine(slVal,'#ff3355');
+    hLine(entryVal,'#6666ff');
+
+    const current=closes[closes.length-1];
+    const inProfit = t.signal==='COMPRAR' ? current>entryVal : current<entryVal;
+    ctx.strokeStyle=inProfit?'#00ff88':'#ff3355';
+    ctx.lineWidth=1.5;
+    ctx.beginPath();
+    closes.forEach((c,i)=>{
+      const x=(i/(closes.length-1))*w;
+      const y=toY(c);
+      if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+
+    // punto del precio actual
+    ctx.fillStyle=inProfit?'#00ff88':'#ff3355';
+    ctx.beginPath();
+    ctx.arc(w-2,toY(current),3,0,Math.PI*2);
+    ctx.fill();
+  }catch(e){
+    ctx.fillStyle='#444';ctx.font='10px monospace';
+    ctx.fillText('Gráfico no disponible',8,h/2);
+    console.log('Chart error:',e.message);
+  }
+}
+
 async function fetchServerState(){
   try{
     const res=await fetch(BACKEND_URL+'/state?_t='+Date.now(),{cache:'no-store'});
@@ -926,10 +980,15 @@ function renderServerState(s){
     otEl.innerHTML=openTrades.map(t=>`<div class="mini-card" style="text-align:left;padding:8px;margin-bottom:6px">
       <div style="font-size:9px;color:#8888ff;margin-bottom:4px">🔵 OPERACIÓN ABIERTA (real, servidor) · ${t.strategy||'Reversión'}</div>
       <div style="font-size:11px">${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf}</div>
+      <canvas id="chart-${t.pair}" width="300" height="70" style="width:100%;height:70px;display:block;margin:6px 0;background:#08080d;border-radius:6px"></canvas>
+      <div style="font-size:9px;color:#666;display:flex;gap:10px;justify-content:center;margin-bottom:4px">
+        <span style="color:#8888ff">— Entrada</span><span style="color:#00ff88">— TP</span><span style="color:#ff3355">— SL</span>
+      </div>
       <div style="font-size:10px;color:#666;margin-top:4px">Entrada $${t.entry} · TP $${t.tp?.toFixed?t.tp.toFixed(2):t.tp} · SL $${t.sl?.toFixed?t.sl.toFixed(2):t.sl}</div>
       <div style="font-size:9px;color:#444;margin-top:2px">Confianza ${t.confidence}% · Abierto: ${t.openTime}</div>
       <button onclick="closeServerTradeManual('${t.pair}')" class="btn btn-orange" style="width:100%;padding:7px 0;font-size:10px;margin-top:8px">✕ CERRAR ${t.pair.replace('USDT','')} AHORA</button>
     </div>`).join('');
+    openTrades.forEach(t=>drawTradeChart(t));
   }else{
     otEl.style.display='none';
   }
