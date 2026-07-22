@@ -262,6 +262,15 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
         </div>
         <div style="font-size:9px;color:#333;margin-top:2px">% del capital por operación individual. Con BTC+ETH abiertos a la vez, la exposición total es el doble de este número.</div>
       </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:10px;color:#555;margin-bottom:4px">Sub-SL: minutos de desacuerdo (15m) antes de cortar</div>
+        <div style="display:flex;gap:4px" id="subSlSelector">
+          <button class="tf-btn active" data-min="5" onclick="setSubSlMin(this)">5 min</button>
+          <button class="tf-btn" data-min="15" onclick="setSubSlMin(this)">15 min</button>
+          <button class="tf-btn" data-min="30" onclick="setSubSlMin(this)">30 min</button>
+        </div>
+        <div style="font-size:9px;color:#333;margin-top:2px">Solo aplica a operaciones de 1h/4h. Más minutos = más tolerancia al "serrucho" del mercado, pero corta más tarde si la tendencia sí se sostiene.</div>
+      </div>
       <div style="font-size:9px;color:#333;line-height:1.5">✓ Configuración validada por backtest: BTC+ETH en 4h dieron resultados positivos en 180 días de datos históricos reales.</div>
     </div>
 
@@ -733,6 +742,14 @@ function setPositionSize(btn){
   updateServerConfig();
 }
 
+let subSlThresholdMin=5;
+function setSubSlMin(btn){
+  document.querySelectorAll('#subSlSelector .tf-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  subSlThresholdMin=parseInt(btn.dataset.min);
+  updateServerConfig();
+}
+
 // ── Risk Calculator ───────────────────────────────────────
 function calcRisk(){
   const cap=parseFloat(document.getElementById('riskCapital').value)||1000;
@@ -931,7 +948,8 @@ async function updateServerConfig(){
     requireMTF:document.getElementById('requireMTF').checked,
     maxDailyGainPct:parseFloat(document.getElementById('maxDailyGain').value)||5,
     maxDailyLossPct:parseFloat(document.getElementById('maxDailyLoss').value)||3,
-    positionSizePct:positionSizePct
+    positionSizePct:positionSizePct,
+    subSlThresholdMin:subSlThresholdMin
   };
   try{
     await fetch(BACKEND_URL+'/state/config',{
@@ -996,8 +1014,11 @@ function renderServerState(s){
   if(openTrades.length>0){
     otEl.style.display='block';
     otEl.innerHTML=openTrades.map(t=>`<div class="mini-card" style="text-align:left;padding:8px;margin-bottom:6px">
-      <div style="font-size:9px;color:#8888ff;margin-bottom:4px">🔵 OPERACIÓN ABIERTA (real, servidor) · ${t.strategy||'Reversión'}${t.trailingActive?' · 🔒 Trailing activo':''}${t.partialTaken?' · 💰 50% asegurado':''}${t.trendDisagreeCount>0?` · ⚠️ Vigía 15m: ${t.trendDisagreeCount}/5`:''}</div>
-      <div style="font-size:11px">${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf}</div>
+      <div style="font-size:9px;color:#8888ff;margin-bottom:4px">🔵 OPERACIÓN ABIERTA (real, servidor) · ${t.strategy||'Reversión'}${t.trailingActive?' · 🔒 Trailing activo':''}${t.partialTaken?' · 💰 50% asegurado':''}${t.trendDisagreeCount>0?` · ⚠️ Vigía 15m: ${t.trendDisagreeCount}/${subSlThresholdMin}`:''}</div>
+      <div style="font-size:11px;display:flex;align-items:center;gap:6px">
+        <span style="padding:2px 8px;border-radius:4px;font-weight:700;font-size:10px;background:${t.direction==='SHORT'?'#ff335533':'#00ff8833'};color:${t.direction==='SHORT'?'#ff3355':'#00ff88'}">${t.direction==='SHORT'?'🐻 SHORT':'🐂 LARGO'}</span>
+        <span>${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf}</span>
+      </div>
       <div id="pnl-${t.pair}" style="font-size:16px;font-weight:700;margin:4px 0;color:#666">Calculando...</div>
       <canvas id="chart-${t.pair}" width="300" height="70" style="width:100%;height:70px;display:block;margin:6px 0;background:#08080d;border-radius:6px"></canvas>
       <div style="font-size:9px;color:#666;display:flex;gap:10px;justify-content:center;margin-bottom:4px">
@@ -1019,8 +1040,11 @@ function renderServerState(s){
     listEl.innerHTML=[...s.trades].reverse().slice(0,10).map(t=>{
       const c=t.pnl>=0?'#00ff88':'#ff3355';
       return `<div class="trade-item" style="border-color:${c}33;padding:8px">
-        <div style="display:flex;justify-content:space-between">
-          <span>${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf}</span>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="display:flex;align-items:center;gap:5px">
+            <span style="font-size:9px">${t.direction==='SHORT'?'🐻':'🐂'}</span>
+            ${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf}
+          </span>
           <span style="color:${c};font-weight:700">${t.pnl>=0?'+':''}$${t.pnl.toFixed(2)}</span>
         </div>
         <div style="color:#444;margin-top:3px">${t.reason} · ${t.closeTime}${t.strategy?' · '+t.strategy:''}</div>
@@ -1044,6 +1068,12 @@ function renderServerState(s){
     positionSizePct=s.positionSizePct;
     document.querySelectorAll('#positionSizeSelector .tf-btn').forEach(b=>{
       b.classList.toggle('active', parseInt(b.dataset.size)===positionSizePct);
+    });
+  }
+  if(s.subSlThresholdMin!==undefined){
+    subSlThresholdMin=s.subSlThresholdMin;
+    document.querySelectorAll('#subSlSelector .tf-btn').forEach(b=>{
+      b.classList.toggle('active', parseInt(b.dataset.min)===subSlThresholdMin);
     });
   }
   if(s.minConfidence!==undefined){
