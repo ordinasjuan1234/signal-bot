@@ -832,16 +832,17 @@ async function drawTradeChart(t){
     const current=closes[closes.length-1];
     const inProfit = t.signal==='COMPRAR' ? current>entryVal : current<entryVal;
 
-    // PnL no realizado, con la misma fórmula que usa el backend al cerrar de verdad
+    // PnL no realizado (neto de comisión simulada), misma fórmula que usa el backend al cerrar de verdad
     const pnlEl=document.getElementById('pnl-'+t.pair);
     if(pnlEl){
       const pricePct = t.signal==='COMPRAR' ? (current-entryVal)/entryVal : (entryVal-current)/entryVal;
       const size=t.size||200;
-      const pnl=size*pricePct;
-      const pnlPct=pricePct*100;
+      const commission=size*0.001*2; // 0.1% por lado, ida y vuelta
+      const pnl=(size*pricePct)-commission;
+      const pnlPct=(pnl/size)*100;
       const color=pnl>=0?'#00ff88':'#ff3355';
       pnlEl.style.color=color;
-      pnlEl.textContent=`${pnl>=0?'+':''}$${pnl.toFixed(2)} (${pnl>=0?'+':''}${pnlPct.toFixed(2)}%)`;
+      pnlEl.textContent=`${pnl>=0?'+':''}$${pnl.toFixed(2)} (${pnl>=0?'+':''}${pnlPct.toFixed(2)}%) neto`;
     }
 
     ctx.strokeStyle=inProfit?'#00ff88':'#ff3355';
@@ -884,9 +885,9 @@ async function exportServerTrades(){
   const s=await fetchServerState();
   if(!s||!s.trades||s.trades.length===0){alert('No hay operaciones cerradas del servidor todavía.');return;}
   const q=v=>`"${String(v).replace(/"/g,'""')}"`; // envuelve cada valor en comillas, así una coma adentro (como en las fechas) no rompe las columnas
-  const headers=['Par','Señal','TF','Entrada','Salida','PnL','PnL%','Razón','Apertura','Cierre','Confianza','Estrategia'];
+  const headers=['Par','Señal','TF','Entrada','Salida','PnL Neto','PnL Neto %','PnL Bruto','Comisión','Razón','Apertura','Cierre','Confianza','Estrategia'];
   const csv=headers.map(q).join(',')+'\n'+
-    s.trades.map(t=>[t.pair,t.signal,t.tf||'?',t.entry,t.exitPrice,t.pnl.toFixed(2),t.pnlPct.toFixed(2),t.reason,t.openTime,t.closeTime,t.confidence,t.strategy||'Reversión (histórico)'].map(q).join(',')).join('\n');
+    s.trades.map(t=>[t.pair,t.signal,t.tf||'?',t.entry,t.exitPrice,t.pnl.toFixed(2),t.pnlPct.toFixed(2),(t.pnlBeforeFees!==undefined?t.pnlBeforeFees.toFixed(2):t.pnl.toFixed(2)),(t.commission!==undefined?t.commission.toFixed(2):'0.00'),t.reason,t.openTime,t.closeTime,t.confidence,t.strategy||'Reversión (histórico)'].map(q).join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
