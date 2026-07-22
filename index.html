@@ -883,8 +883,10 @@ async function fetchServerState(){
 async function exportServerTrades(){
   const s=await fetchServerState();
   if(!s||!s.trades||s.trades.length===0){alert('No hay operaciones cerradas del servidor todavía.');return;}
-  const csv='Par,Señal,TF,Entrada,Salida,PnL,PnL%,Razón,Apertura,Cierre,Confianza,Estrategia\n'+
-    s.trades.map(t=>`${t.pair},${t.signal},${t.tf||'?'},${t.entry},${t.exitPrice},${t.pnl.toFixed(2)},${t.pnlPct.toFixed(2)},${t.reason},${t.openTime},${t.closeTime},${t.confidence},${t.strategy||'Reversión (histórico)'}`).join('\n');
+  const q=v=>`"${String(v).replace(/"/g,'""')}"`; // envuelve cada valor en comillas, así una coma adentro (como en las fechas) no rompe las columnas
+  const headers=['Par','Señal','TF','Entrada','Salida','PnL','PnL%','Razón','Apertura','Cierre','Confianza','Estrategia'];
+  const csv=headers.map(q).join(',')+'\n'+
+    s.trades.map(t=>[t.pair,t.signal,t.tf||'?',t.entry,t.exitPrice,t.pnl.toFixed(2),t.pnlPct.toFixed(2),t.reason,t.openTime,t.closeTime,t.confidence,t.strategy||'Reversión (histórico)'].map(q).join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
