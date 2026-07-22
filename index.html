@@ -996,7 +996,7 @@ function renderServerState(s){
   if(openTrades.length>0){
     otEl.style.display='block';
     otEl.innerHTML=openTrades.map(t=>`<div class="mini-card" style="text-align:left;padding:8px;margin-bottom:6px">
-      <div style="font-size:9px;color:#8888ff;margin-bottom:4px">🔵 OPERACIÓN ABIERTA (real, servidor) · ${t.strategy||'Reversión'}${t.trailingActive?' · 🔒 Trailing activo':''}</div>
+      <div style="font-size:9px;color:#8888ff;margin-bottom:4px">🔵 OPERACIÓN ABIERTA (real, servidor) · ${t.strategy||'Reversión'}${t.trailingActive?' · 🔒 Trailing activo':''}${t.partialTaken?' · 💰 50% asegurado':''}</div>
       <div style="font-size:11px">${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf}</div>
       <div id="pnl-${t.pair}" style="font-size:16px;font-weight:700;margin:4px 0;color:#666">Calculando...</div>
       <canvas id="chart-${t.pair}" width="300" height="70" style="width:100%;height:70px;display:block;margin:6px 0;background:#08080d;border-radius:6px"></canvas>
