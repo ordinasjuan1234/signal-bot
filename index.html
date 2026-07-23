@@ -271,6 +271,15 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
         </div>
         <div style="font-size:9px;color:#333;margin-top:2px">Solo aplica a operaciones de 1h/4h. Más minutos = más tolerancia al "serrucho" del mercado, pero corta más tarde si la tendencia sí se sostiene.</div>
       </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:10px;color:#555;margin-bottom:4px">Agresividad del TP (R:R siempre 2:1, cambia la distancia)</div>
+        <div style="display:flex;gap:4px" id="tpMultSelector">
+          <button class="tf-btn" data-mult="2" onclick="setTpMult(this)">2x ATR (rápido)</button>
+          <button class="tf-btn active" data-mult="3" onclick="setTpMult(this)">3x ATR (actual)</button>
+          <button class="tf-btn" data-mult="4" onclick="setTpMult(this)">4x ATR (paciente)</button>
+        </div>
+        <div style="font-size:9px;color:#333;margin-top:2px">Menos ATR = TP más cerca, se realiza más rápido pero con menos % por trade. Compensá con el tamaño de posición de arriba si querés más $ por operación sin esperar tanto.</div>
+      </div>
       <div style="font-size:9px;color:#333;line-height:1.5">✓ Configuración validada por backtest: BTC+ETH en 4h dieron resultados positivos en 180 días de datos históricos reales.</div>
     </div>
 
@@ -750,6 +759,14 @@ function setSubSlMin(btn){
   updateServerConfig();
 }
 
+let tpAtrMultiplier=3;
+function setTpMult(btn){
+  document.querySelectorAll('#tpMultSelector .tf-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  tpAtrMultiplier=parseFloat(btn.dataset.mult);
+  updateServerConfig();
+}
+
 // ── Risk Calculator ───────────────────────────────────────
 function calcRisk(){
   const cap=parseFloat(document.getElementById('riskCapital').value)||1000;
@@ -949,7 +966,8 @@ async function updateServerConfig(){
     maxDailyGainPct:parseFloat(document.getElementById('maxDailyGain').value)||5,
     maxDailyLossPct:parseFloat(document.getElementById('maxDailyLoss').value)||3,
     positionSizePct:positionSizePct,
-    subSlThresholdMin:subSlThresholdMin
+    subSlThresholdMin:subSlThresholdMin,
+    tpAtrMultiplier:tpAtrMultiplier
   };
   try{
     await fetch(BACKEND_URL+'/state/config',{
@@ -1074,6 +1092,12 @@ function renderServerState(s){
     subSlThresholdMin=s.subSlThresholdMin;
     document.querySelectorAll('#subSlSelector .tf-btn').forEach(b=>{
       b.classList.toggle('active', parseInt(b.dataset.min)===subSlThresholdMin);
+    });
+  }
+  if(s.tpAtrMultiplier!==undefined){
+    tpAtrMultiplier=s.tpAtrMultiplier;
+    document.querySelectorAll('#tpMultSelector .tf-btn').forEach(b=>{
+      b.classList.toggle('active', parseFloat(b.dataset.mult)===tpAtrMultiplier);
     });
   }
   if(s.minConfidence!==undefined){
