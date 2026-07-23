@@ -197,7 +197,7 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
       </div>
       <div id="serverStreak" style="display:none;font-size:10px;margin-bottom:8px;text-align:center"></div>
       <div id="serverOpenTrade" style="display:none;margin-bottom:8px"></div>
-      <button onclick="toggleServerAuto()" id="serverAutoBtn" class="btn btn-blue" style="width:100%;padding:10px 0;font-size:12px">▶ ACTIVAR AUTO (Servidor)</button>
+      <button onclick="toggleServerAuto()" id="serverAutoBtn" class="btn btn-gray" disabled style="width:100%;padding:10px 0;font-size:12px">Verificando estado real...</button>
       <div style="font-size:9px;color:#333;margin-top:8px;line-height:1.5">Este panel muestra el estado real del servidor — sigue operando aunque cierres esta página.</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
         <div class="card-label" style="margin-top:0">ÚLTIMOS TRADES DEL SERVIDOR</div>
@@ -497,7 +497,7 @@ function analyze(closes,highs,lows){
 
 // ── Fetch Data ────────────────────────────────────────────
 async function fetchKlines(p,tf,limit=200){
-  const res=await fetch(`https://api.binance.com/api/v3/klines?symbol=${p}&interval=${tf}&limit=${limit}`);
+  const res=await fetch(`https://data-api.binance.vision/api/v3/klines?symbol=${p}&interval=${tf}&limit=${limit}`);
   if(!res.ok)throw new Error('Par no encontrado');
   const data=await res.json();
   return{closes:data.map(k=>parseFloat(k[4])),highs:data.map(k=>parseFloat(k[2])),lows:data.map(k=>parseFloat(k[3]))}
@@ -903,10 +903,12 @@ async function drawTradeChart(t){
   }
 }
 
+let lastServerState=null;
 async function fetchServerState(){
   try{
     const res=await fetch(BACKEND_URL+'/state?_t='+Date.now(),{cache:'no-store'});
     const s=await res.json();
+    lastServerState=s;
     renderServerState(s);
     return s;
   }catch(e){
@@ -930,6 +932,10 @@ async function exportServerTrades(){
 }
 
 async function toggleServerAuto(){
+  const currentlyActive = lastServerState && lastServerState.autoMode;
+  if(currentlyActive){
+    if(!confirm('¿Seguro que querés PAUSAR el AUTO? Mientras esté pausado, las operaciones abiertas no van a estar protegidas (ni TP, ni SL, ni trailing) hasta que lo reactives.')) return;
+  }
   const btn=document.getElementById('serverAutoBtn');
   btn.disabled=true;btn.textContent='...';
   try{
@@ -1000,6 +1006,7 @@ function renderServerState(s){
   document.getElementById('serverAutoStatus').style.color=s.autoMode?'#00ff88':'#666';
   document.getElementById('serverAutoDot').style.background=s.autoMode?'#00ff88':'#333';
   const btn=document.getElementById('serverAutoBtn');
+  btn.disabled=false;
   btn.textContent=s.autoMode?'⏸ PAUSAR AUTO (Servidor)':'▶ ACTIVAR AUTO (Servidor)';
   btn.className=s.autoMode?'btn btn-orange':'btn btn-blue';
 
