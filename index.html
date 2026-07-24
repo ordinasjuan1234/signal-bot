@@ -5,46 +5,60 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Signal Bot Pro</title>
 <style>
+:root{
+  --bg-main:#0a0a0f; --text-main:#e0e0e0; --bg-header:#0d0d18; --border-main:#1e1e2e;
+  --text-dim:#444; --text-faint:#333; --bg-card:#0d0d18; --bg-input:#111;
+  --border-input:#2a2a3e; --text-mid:#555; --border-faint:#0d0d0d;
+  --bg-faint:#0d0d0d; --text-verydim:#1e1e1e; --chart-bg:#08080d;
+}
+body.light{
+  --bg-main:#f4f5f7; --text-main:#1a1a1f; --bg-header:#ffffff; --border-main:#dcdce4;
+  --text-dim:#8a8a95; --text-faint:#9a9aa5; --bg-card:#ffffff; --bg-input:#eef0f4;
+  --border-input:#d2d4dd; --text-mid:#6a6a75; --border-faint:#eaeaee;
+  --bg-faint:#eef0f4; --text-verydim:#c5c5cc; --chart-bg:#f0f1f5;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0a0a0f;color:#e0e0e0;font-family:'Courier New',monospace;min-height:100vh}
-.header{background:#0d0d18;border-bottom:1px solid #1e1e2e;padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
+body{background:var(--bg-main);color:var(--text-main);font-family:'Courier New',monospace;min-height:100vh}
+.header{background:var(--bg-header);border-bottom:1px solid var(--border-main);padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
 .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:8px}
 .dot-green{background:#00ff88;box-shadow:0 0 8px #00ff88}
 .dot-orange{background:#ff8800;box-shadow:0 0 8px #ff8800}
-.tabs{display:flex;border-bottom:1px solid #1e1e2e;overflow-x:auto}
-.tab{flex:1;min-width:60px;background:none;border:none;border-bottom:2px solid transparent;color:#444;padding:9px 0;font-size:10px;cursor:pointer;font-family:inherit;letter-spacing:1px;white-space:nowrap}
+.tabs{display:flex;border-bottom:1px solid var(--border-main);overflow-x:auto}
+.tab{flex:1;min-width:60px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);padding:9px 0;font-size:10px;cursor:pointer;font-family:inherit;letter-spacing:1px;white-space:nowrap}
 .tab.active{border-bottom-color:#6666ff;color:#8888ff}
 .content{padding:12px 12px 80px}
-.card{background:#0d0d18;border:1px solid #1e1e2e;border-radius:10px;padding:12px;margin-bottom:10px}
-.card-label{font-size:9px;color:#333;letter-spacing:2px;margin-bottom:8px}
-select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radius:8px;padding:7px 10px;font-size:11px;font-family:inherit;outline:none}
+.card{background:var(--bg-card);border:1px solid var(--border-main);border-radius:10px;padding:12px;margin-bottom:10px}
+.card-label{font-size:9px;color:var(--text-faint);letter-spacing:2px;margin-bottom:8px}
+select,input{background:var(--bg-input);border:1px solid var(--border-input);color:var(--text-main);border-radius:8px;padding:7px 10px;font-size:11px;font-family:inherit;outline:none}
 .btn{border-radius:8px;padding:8px 14px;font-size:11px;cursor:pointer;font-family:inherit;border:1px solid;font-weight:600}
 .btn-green{background:#0d2d1a;border-color:#00ff88;color:#00ff88}
 .btn-red{background:#2d0d0d;border-color:#ff3355;color:#ff3355}
 .btn-blue{background:#0d0d2d;border-color:#6666ff;color:#8888ff}
-.btn-gray{background:#111;border-color:#333;color:#555}
+.btn-gray{background:var(--bg-input);border-color:var(--border-input);color:var(--text-mid)}
 .btn-orange{background:#1f1000;border-color:#ff8800;color:#ff8800}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
-.mini-card{background:#111;border-radius:8px;padding:8px;text-align:center}
-.mini-label{font-size:9px;color:#444;margin-bottom:3px}
+.mini-card{background:var(--bg-input);border-radius:8px;padding:8px;text-align:center}
+.mini-label{font-size:9px;color:var(--text-dim);margin-bottom:3px}
 .mini-value{font-size:14px;font-weight:700}
 .signal-box{border-radius:10px;padding:10px 16px;text-align:center;border-width:2px;border-style:solid;flex:1}
-.progress-bar{height:5px;background:#222;border-radius:3px;overflow:hidden;margin-top:8px}
+.progress-bar{height:5px;background:var(--border-input);border-radius:3px;overflow:hidden;margin-top:8px}
 .progress-fill{height:100%;border-radius:3px;transition:width 0.6s}
-.indicator-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #0d0d0d}
+.indicator-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border-faint)}
 .trade-item{border-radius:10px;padding:10px;margin-bottom:7px;border:1px solid}
-.stat-card{background:#0d0d18;border:1px solid #1e1e2e;border-radius:10px;padding:10px}
+.stat-card{background:var(--bg-card);border:1px solid var(--border-main);border-radius:10px;padding:10px}
 .alert-banner{border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.7}}
-.tf-btn{background:#111;border:1px solid #2a2a3e;color:#555;border-radius:6px;padding:5px 8px;font-size:10px;cursor:pointer;font-family:inherit}
+.tf-btn{background:var(--bg-input);border:1px solid var(--border-input);color:var(--text-mid);border-radius:6px;padding:5px 8px;font-size:10px;cursor:pointer;font-family:inherit}
 .tf-btn.active{background:#1e1e3e;border-color:#6666ff;color:#8888ff}
+body.light .tf-btn.active{background:#e4e4ff;border-color:#6666ff;color:#4444dd}
 .mtf-row{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
 .mtf-badge{font-size:9px;padding:3px 6px;border-radius:4px;font-weight:700}
 .risk-input{width:100%;margin-bottom:8px}
-.disclaimer{margin-top:10px;padding:8px;background:#0d0d0d;border-radius:8px;font-size:9px;color:#1e1e1e;line-height:1.6}
+.disclaimer{margin-top:10px;padding:8px;background:var(--bg-faint);border-radius:8px;font-size:9px;color:var(--text-verydim);line-height:1.6}
 .auto-status{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .auto-dot{width:10px;height:10px;border-radius:50%}
+.theme-toggle{background:none;border:1px solid var(--border-input);color:var(--text-mid);border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;margin-left:8px}
 </style>
 </head>
 <body>
@@ -52,11 +66,12 @@ select,input{background:#111;border:1px solid #2a2a3e;color:#e0e0e0;border-radiu
 <div class="header">
   <div style="display:flex;align-items:center">
     <span class="dot dot-green" id="modeDot"></span>
-    <span style="font-weight:800;font-size:12px;letter-spacing:3px;color:#fff">SIGNAL BOT PRO</span>
+    <span style="font-weight:800;font-size:12px;letter-spacing:3px;color:var(--text-main)">SIGNAL BOT PRO</span>
     <span id="modeLabel" style="font-size:9px;color:#00ff8866;border:1px solid #00ff8822;border-radius:4px;padding:1px 6px;margin-left:8px">DEMO</span>
+    <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">🌙</button>
   </div>
   <div style="text-align:right">
-    <div style="font-size:9px;color:#444">CAPITAL</div>
+    <div style="font-size:9px;color:var(--text-dim)">CAPITAL</div>
     <div style="font-size:12px;font-weight:700" id="capitalDisplay">$1000.00</div>
   </div>
 </div>
@@ -842,12 +857,15 @@ async function drawTradeChart(t){
   try{
     const res=await fetch(`https://data-api.binance.vision/api/v3/klines?symbol=${t.pair}&interval=${t.tf}&limit=50`);
     const data=await res.json();
+    const opens=data.map(k=>parseFloat(k[1]));
+    const highs=data.map(k=>parseFloat(k[2]));
+    const lows=data.map(k=>parseFloat(k[3]));
     const closes=data.map(k=>parseFloat(k[4]));
     if(closes.length===0)return;
     const tpVal=typeof t.tp==='number'?t.tp:parseFloat(t.tp);
     const slVal=typeof t.sl==='number'?t.sl:parseFloat(t.sl);
     const entryVal=typeof t.entry==='number'?t.entry:parseFloat(t.entry);
-    const allVals=[...closes,tpVal,slVal,entryVal];
+    const allVals=[...highs,...lows,tpVal,slVal,entryVal];
     const min=Math.min(...allVals), max=Math.max(...allVals);
     const range=(max-min)||1;
     const pad=6;
@@ -888,15 +906,28 @@ async function drawTradeChart(t){
       pnlEl.textContent=`${pnl>=0?'+':''}$${pnl.toFixed(2)} (${pnl>=0?'+':''}${pnlPct.toFixed(2)}%) neto`;
     }
 
-    ctx.strokeStyle=inProfit?'#00ff88':'#ff3355';
-    ctx.lineWidth=1.5;
-    ctx.beginPath();
-    closes.forEach((c,i)=>{
-      const x=(i/(closes.length-1))*w;
-      const y=toY(c);
-      if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
-    });
-    ctx.stroke();
+    // Velas japonesas reales (cuerpo + mecha), en vez de una simple línea
+    const n=closes.length;
+    const slot=w/n;
+    const bodyWidth=Math.max(1,slot*0.6);
+    for(let i=0;i<n;i++){
+      const x=slot*i+slot/2;
+      const isUp=closes[i]>=opens[i];
+      const color=isUp?'#00ff88':'#ff3355';
+      ctx.strokeStyle=color;
+      ctx.lineWidth=1;
+      // mecha (high-low)
+      ctx.beginPath();
+      ctx.moveTo(x,toY(highs[i]));
+      ctx.lineTo(x,toY(lows[i]));
+      ctx.stroke();
+      // cuerpo (open-close)
+      const yOpen=toY(opens[i]), yClose=toY(closes[i]);
+      const bodyTop=Math.min(yOpen,yClose);
+      const bodyH=Math.max(1,Math.abs(yClose-yOpen));
+      ctx.fillStyle=color;
+      ctx.fillRect(x-bodyWidth/2,bodyTop,bodyWidth,bodyH);
+    }
 
     // punto del precio actual
     ctx.fillStyle=inProfit?'#00ff88':'#ff3355';
@@ -1057,7 +1088,7 @@ function renderServerState(s){
         <span id="price-${t.pair}" style="margin-left:auto;font-size:11px;font-weight:700;color:#8888ff">— Precio: cargando...</span>
       </div>
       <div id="pnl-${t.pair}" style="font-size:16px;font-weight:700;margin:4px 0;color:#666">Calculando...</div>
-      <canvas id="chart-${t.pair}" width="300" height="70" style="width:100%;height:70px;display:block;margin:6px 0;background:#08080d;border-radius:6px"></canvas>
+      <canvas id="chart-${t.pair}" width="300" height="70" style="width:100%;height:70px;display:block;margin:6px 0;background:var(--chart-bg);border-radius:6px"></canvas></canvas>
       <div style="font-size:9px;color:#666;display:flex;gap:10px;justify-content:center;margin-bottom:4px">
         <span style="color:#8888ff">— Entrada</span><span style="color:#00ff88">— TP</span><span style="color:#ff3355">— SL</span>
       </div>
@@ -1162,6 +1193,20 @@ function resetAll(){
   _remove('capital');_remove('trades');_remove('openTrade');_remove('dailyPnl');_remove('dailyTrades');
   updateCapitalDisplay();renderTrades();renderStreakInfo();renderActionArea();
 }
+
+// ── Tema claro/oscuro ─────────────────────────────────────
+function applyTheme(theme){
+  document.body.classList.toggle('light', theme==='light');
+  const btn=document.getElementById('themeToggleBtn');
+  if(btn) btn.textContent = theme==='light' ? '☀️' : '🌙';
+}
+function toggleTheme(){
+  const current = document.body.classList.contains('light') ? 'light' : 'dark';
+  const next = current==='light' ? 'dark' : 'light';
+  applyTheme(next);
+  _set('theme', next);
+}
+applyTheme(_get('theme') || 'dark');
 
 // ── Init ──────────────────────────────────────────────────
 updateCapitalDisplay();
