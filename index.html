@@ -852,7 +852,16 @@ async function drawTradeChart(t){
   const canvas=document.getElementById('chart-'+t.pair);
   if(!canvas)return;
   const ctx=canvas.getContext('2d');
-  const w=canvas.width,h=canvas.height;
+  // Ajuste de alta resolución: sin esto, en pantallas retina/celulares el
+  // gráfico se dibuja "chico" y se estira, quedando pixelado.
+  const dpr=window.devicePixelRatio||1;
+  const rect=canvas.getBoundingClientRect();
+  const w=rect.width||300, h=rect.height||70;
+  if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){
+    canvas.width=Math.round(w*dpr);
+    canvas.height=Math.round(h*dpr);
+  }
+  ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,w,h);
   try{
     const res=await fetch(`https://data-api.binance.vision/api/v3/klines?symbol=${t.pair}&interval=${t.tf}&limit=50`);
