@@ -866,6 +866,15 @@ async function drawTradeChart(t){
     const current=closes[closes.length-1];
     const inProfit = t.signal==='COMPRAR' ? current>entryVal : current<entryVal;
 
+    // Precio actual del activo en vivo, con la variación % desde la entrada
+    const priceEl=document.getElementById('price-'+t.pair);
+    if(priceEl){
+      const changeFromEntryPct=((current-entryVal)/entryVal)*100;
+      const favorableForTrade = t.signal==='COMPRAR' ? changeFromEntryPct>=0 : changeFromEntryPct<=0;
+      priceEl.style.color=favorableForTrade?'#00ff88':'#ff3355';
+      priceEl.textContent=`$${current.toFixed(current<10?4:2)} (${changeFromEntryPct>=0?'+':''}${changeFromEntryPct.toFixed(2)}% desde entrada)`;
+    }
+
     // PnL no realizado (neto de comisión simulada), misma fórmula que usa el backend al cerrar de verdad
     const pnlEl=document.getElementById('pnl-'+t.pair);
     if(pnlEl){
@@ -899,6 +908,8 @@ async function drawTradeChart(t){
     ctx.fillText('Gráfico no disponible',8,h/2);
     const pnlEl=document.getElementById('pnl-'+t.pair);
     if(pnlEl){pnlEl.textContent='-- (sin datos)';pnlEl.style.color='#444';}
+    const priceEl=document.getElementById('price-'+t.pair);
+    if(priceEl){priceEl.textContent='-- (sin datos)';priceEl.style.color='#444';}
     console.log('Chart error:',e.message);
   }
 }
@@ -1040,9 +1051,10 @@ function renderServerState(s){
     otEl.style.display='block';
     otEl.innerHTML=openTrades.map(t=>`<div class="mini-card" style="text-align:left;padding:8px;margin-bottom:6px">
       <div style="font-size:9px;color:#8888ff;margin-bottom:4px">🔵 OPERACIÓN ABIERTA (real, servidor) · ${t.strategy||'Reversión'}${t.trailingActive?' · 🔒 Trailing activo':''}${t.partialTaken?' · 💰 50% asegurado':''}${t.trendDisagreeCount>0?` · ⚠️ Vigía 15m: ${t.trendDisagreeCount}/${subSlThresholdMin}`:''}</div>
-      <div style="font-size:11px;display:flex;align-items:center;gap:6px">
+      <div style="font-size:11px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
         <span style="padding:2px 8px;border-radius:4px;font-weight:700;font-size:10px;background:${t.direction==='SHORT'?'#ff335533':'#00ff8833'};color:${t.direction==='SHORT'?'#ff3355':'#00ff88'}">${t.direction==='SHORT'?'🐻 SHORT':'🐂 LARGO'}</span>
         <span>${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf}</span>
+        <span id="price-${t.pair}" style="margin-left:auto;font-size:11px;font-weight:700;color:#8888ff">— Precio: cargando...</span>
       </div>
       <div id="pnl-${t.pair}" style="font-size:16px;font-weight:700;margin:4px 0;color:#666">Calculando...</div>
       <canvas id="chart-${t.pair}" width="300" height="70" style="width:100%;height:70px;display:block;margin:6px 0;background:#08080d;border-radius:6px"></canvas>
