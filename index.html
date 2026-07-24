@@ -21,7 +21,7 @@ body.light{
 body{background:var(--bg-main);color:var(--text-main);font-family:'Courier New',monospace;min-height:100vh}
 .header{background:var(--bg-header);border-bottom:1px solid var(--border-main);padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
 .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:8px}
-.dot-green{background:#00ff88;box-shadow:0 0 8px #00ff88}
+.dot-green{background:#3ecf8e;box-shadow:0 0 8px #3ecf8e}
 .dot-orange{background:#ff8800;box-shadow:0 0 8px #ff8800}
 .tabs{display:flex;border-bottom:1px solid var(--border-main);overflow-x:auto}
 .tab{flex:1;min-width:60px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);padding:9px 0;font-size:10px;cursor:pointer;font-family:inherit;letter-spacing:1px;white-space:nowrap}
@@ -31,8 +31,8 @@ body{background:var(--bg-main);color:var(--text-main);font-family:'Courier New',
 .card-label{font-size:9px;color:var(--text-faint);letter-spacing:2px;margin-bottom:8px}
 select,input{background:var(--bg-input);border:1px solid var(--border-input);color:var(--text-main);border-radius:8px;padding:7px 10px;font-size:11px;font-family:inherit;outline:none}
 .btn{border-radius:8px;padding:8px 14px;font-size:11px;cursor:pointer;font-family:inherit;border:1px solid;font-weight:600}
-.btn-green{background:#0d2d1a;border-color:#00ff88;color:#00ff88}
-.btn-red{background:#2d0d0d;border-color:#ff3355;color:#ff3355}
+.btn-green{background:#0d2d1a;border-color:#3ecf8e;color:#3ecf8e}
+.btn-red{background:#2d0d0d;border-color:#f0616f;color:#f0616f}
 .btn-blue{background:#0d0d2d;border-color:#6666ff;color:#8888ff}
 .btn-gray{background:var(--bg-input);border-color:var(--border-input);color:var(--text-mid)}
 .btn-orange{background:#1f1000;border-color:#ff8800;color:#ff8800}
@@ -67,7 +67,7 @@ body.light .tf-btn.active{background:#e4e4ff;border-color:#6666ff;color:#4444dd}
   <div style="display:flex;align-items:center">
     <span class="dot dot-green" id="modeDot"></span>
     <span style="font-weight:800;font-size:12px;letter-spacing:3px;color:var(--text-main)">SIGNAL BOT PRO</span>
-    <span id="modeLabel" style="font-size:9px;color:#00ff8866;border:1px solid #00ff8822;border-radius:4px;padding:1px 6px;margin-left:8px">DEMO</span>
+    <span id="modeLabel" style="font-size:9px;color:#3ecf8e66;border:1px solid #3ecf8e22;border-radius:4px;padding:1px 6px;margin-left:8px">DEMO</span>
     <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">🌙</button>
   </div>
   <div style="text-align:right">
@@ -116,7 +116,7 @@ body.light .tf-btn.active{background:#e4e4ff;border-color:#6666ff;color:#4444dd}
     <button class="tf-btn" onclick="setTF('1w',this)">1S</button>
   </div>
 
-  <div id="errorBox" style="display:none;background:#1a0808;border:1px solid #ff3355;border-radius:10px;padding:10px;color:#ff3355;font-size:11px;margin-bottom:10px"></div>
+  <div id="errorBox" style="display:none;background:#1a0808;border:1px solid #f0616f;border-radius:10px;padding:10px;color:#f0616f;font-size:11px;margin-bottom:10px"></div>
 
   <!-- SIGNAL TAB -->
   <div id="tab-signal">
@@ -149,8 +149,8 @@ body.light .tf-btn.active{background:#e4e4ff;border-color:#6666ff;color:#4444dd}
           </div>
         </div>
         <div class="grid2" style="margin-bottom:8px">
-          <div class="mini-card"><div class="mini-label">ALCISTAS</div><div class="mini-value" style="color:#00ff88" id="bullScore">0</div></div>
-          <div class="mini-card"><div class="mini-label">BAJISTAS</div><div class="mini-value" style="color:#ff3355" id="bearScore">0</div></div>
+          <div class="mini-card"><div class="mini-label">ALCISTAS</div><div class="mini-value" style="color:#3ecf8e" id="bullScore">0</div></div>
+          <div class="mini-card"><div class="mini-label">BAJISTAS</div><div class="mini-value" style="color:#f0616f" id="bearScore">0</div></div>
         </div>
         <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
         <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:#444">
@@ -167,13 +167,13 @@ body.light .tf-btn.active{background:#e4e4ff;border-color:#6666ff;color:#4444dd}
             <div style="font-size:9px;color:#555">ENTRADA</div>
             <div style="font-size:11px;font-weight:700;color:#fff" id="entryPrice"></div>
           </div>
-          <div style="background:#0d2d1a;border:1px solid #00ff8833;border-radius:8px;padding:7px;text-align:center">
-            <div style="font-size:9px;color:#00ff8877">TAKE PROFIT</div>
-            <div style="font-size:11px;font-weight:700;color:#00ff88" id="tpPrice"></div>
+          <div style="background:#0d2d1a;border:1px solid #3ecf8e33;border-radius:8px;padding:7px;text-align:center">
+            <div style="font-size:9px;color:#3ecf8e77">TAKE PROFIT</div>
+            <div style="font-size:11px;font-weight:700;color:#3ecf8e" id="tpPrice"></div>
           </div>
-          <div style="background:#2d0d0d;border:1px solid #ff335533;border-radius:8px;padding:7px;text-align:center">
-            <div style="font-size:9px;color:#ff335577">STOP LOSS</div>
-            <div style="font-size:11px;font-weight:700;color:#ff3355" id="slPrice"></div>
+          <div style="background:#2d0d0d;border:1px solid #f0616f33;border-radius:8px;padding:7px;text-align:center">
+            <div style="font-size:9px;color:#f0616f77">STOP LOSS</div>
+            <div style="font-size:11px;font-weight:700;color:#f0616f" id="slPrice"></div>
           </div>
         </div>
         <div style="display:flex;justify-content:space-between;padding:4px 0;border-top:1px solid #111">
@@ -199,8 +199,8 @@ body.light .tf-btn.active{background:#e4e4ff;border-color:#6666ff;color:#4444dd}
 
   <!-- AUTO TAB -->
   <div id="tab-auto" style="display:none">
-    <div class="card" style="border-color:#00ff8833">
-      <div class="card-label" style="color:#00ff88">🌐 SERVIDOR 24/7 (el que realmente opera)</div>
+    <div class="card" style="border-color:#3ecf8e33">
+      <div class="card-label" style="color:#3ecf8e">🌐 SERVIDOR 24/7 (el que realmente opera)</div>
       <div class="auto-status">
         <div class="auto-dot" id="serverAutoDot" style="background:#333"></div>
         <span style="font-size:12px;font-weight:700" id="serverAutoStatus">Cargando...</span>
@@ -336,15 +336,15 @@ body.light .tf-btn.active{background:#e4e4ff;border-color:#6666ff;color:#4444dd}
       </div>
       <div style="margin-bottom:10px">
         <div style="font-size:10px;color:#555;margin-bottom:4px">% de riesgo por operación</div>
-        <input type="range" id="riskPct" min="0.5" max="5" step="0.5" value="2" style="width:100%;accent-color:#ff3355" oninput="document.getElementById('riskPctVal').textContent=this.value+'%';calcRisk()">
+        <input type="range" id="riskPct" min="0.5" max="5" step="0.5" value="2" style="width:100%;accent-color:#f0616f" oninput="document.getElementById('riskPctVal').textContent=this.value+'%';calcRisk()">
         <div style="display:flex;justify-content:space-between;font-size:9px;color:#444">
-          <span>0.5%</span><span id="riskPctVal" style="color:#ff3355">2%</span><span>5%</span>
+          <span>0.5%</span><span id="riskPctVal" style="color:#f0616f">2%</span><span>5%</span>
         </div>
       </div>
       <div style="background:#111;border-radius:8px;padding:12px;margin-bottom:10px">
         <div style="display:flex;justify-content:space-between;margin-bottom:6px">
           <span style="font-size:10px;color:#555">Máximo a perder por operación</span>
-          <span style="font-size:12px;font-weight:700;color:#ff3355" id="maxLoss">$20.00</span>
+          <span style="font-size:12px;font-weight:700;color:#f0616f" id="maxLoss">$20.00</span>
         </div>
         <div style="display:flex;justify-content:space-between;margin-bottom:6px">
           <span style="font-size:10px;color:#555">Capital a usar por operación</span>
@@ -379,9 +379,9 @@ body.light .tf-btn.active{background:#e4e4ff;border-color:#6666ff;color:#4444dd}
     <div class="card">
       <div class="card-label">REGLAS DE GESTIÓN</div>
       <div style="font-size:11px;color:#555;line-height:2">
-        <div>✓ Nunca arriesgues más del <span style="color:#ff3355" id="riskRule">2%</span> por operación</div>
-        <div>✓ Límite pérdida diaria: <span style="color:#ff3355" id="dailyLossRule">$30.00</span></div>
-        <div>✓ Límite ganancia diaria: <span style="color:#00ff88" id="dailyGainRule">$50.00</span></div>
+        <div>✓ Nunca arriesgues más del <span style="color:#f0616f" id="riskRule">2%</span> por operación</div>
+        <div>✓ Límite pérdida diaria: <span style="color:#f0616f" id="dailyLossRule">$30.00</span></div>
+        <div>✓ Límite ganancia diaria: <span style="color:#3ecf8e" id="dailyGainRule">$50.00</span></div>
         <div>✓ Máximo 3 operaciones perdedoras seguidas → parar</div>
         <div>✓ Nunca operar en mercado NEUTRO</div>
         <div>✓ Esperar confirmación multi-TF para señales fuertes</div>
@@ -554,7 +554,7 @@ function renderSignal(){
   document.getElementById('loadingMsg').style.display='none';
   document.getElementById('signalContent').style.display='block';
   const a=analysis;
-  const sc=a.signal==='COMPRAR'?'#00ff88':a.signal==='VENDER'?'#ff3355':'#888';
+  const sc=a.signal==='COMPRAR'?'#3ecf8e':a.signal==='VENDER'?'#f0616f':'#888';
   document.getElementById('pairLabel').textContent=`${pair.replace('USDT','/USDT')} · ${currentTF.toUpperCase()}`;
   document.getElementById('priceDisplay').textContent=`$${fp(a.price)}`;
   const sb=document.getElementById('signalBox');
@@ -570,9 +570,9 @@ function renderSignal(){
   document.getElementById('entryPrice').textContent='$'+fp(a.entry);
   document.getElementById('tpPrice').textContent='$'+fp(a.tp);
   document.getElementById('slPrice').textContent='$'+fp(a.sl);
-  const rrEl=document.getElementById('rrText');rrEl.textContent='1 : '+a.rr.toFixed(2);rrEl.style.color=a.rr>=1.5?'#00ff88':'#ff8c00';
+  const rrEl=document.getElementById('rrText');rrEl.textContent='1 : '+a.rr.toFixed(2);rrEl.style.color=a.rr>=1.5?'#3ecf8e':'#ff8c00';
   document.getElementById('posSizeText').textContent=a.posSize+' unidades';
-  document.getElementById('indicatorsList').innerHTML=a.reasons.map(r=>`<div class="indicator-row"><span style="font-size:10px;color:#666">${r.l}</span><span style="font-size:10px;font-weight:600;color:${r.b===true?'#00ff88':r.b===false?'#ff3355':'#444'}">${r.v}</span></div>`).join('');
+  document.getElementById('indicatorsList').innerHTML=a.reasons.map(r=>`<div class="indicator-row"><span style="font-size:10px;color:#666">${r.l}</span><span style="font-size:10px;font-weight:600;color:${r.b===true?'#3ecf8e':r.b===false?'#f0616f':'#444'}">${r.v}</span></div>`).join('');
   const ab=document.getElementById('alertBanner');
   if(a.signal!=='NEUTRO'&&a.confidence>=70){
     ab.style.display='block';ab.style.background=a.signal==='COMPRAR'?'#0d2d1a':'#2d0d0d';ab.style.borderColor=sc;ab.style.color=sc;
@@ -591,7 +591,7 @@ function renderMTF(){
   tfs.forEach(tf=>{
     const d=tf===currentTF?analysis:mtfData[tf];
     if(!d){html+=`<span class="mtf-badge" style="background:#111;color:#333">${tf.toUpperCase()}: —</span>`;return}
-    const c=d.signal==='COMPRAR'?'#00ff88':d.signal==='VENDER'?'#ff3355':'#888';
+    const c=d.signal==='COMPRAR'?'#3ecf8e':d.signal==='VENDER'?'#f0616f':'#888';
     const bg=d.signal==='COMPRAR'?'#0d2d1a':d.signal==='VENDER'?'#2d0d0d':'#111';
     html+=`<span class="mtf-badge" style="background:${bg};color:${c};border:1px solid ${c}44">${tf.toUpperCase()}: ${d.signal==='COMPRAR'?'▲':d.signal==='VENDER'?'▼':'—'}</span>`;
     if(d.signal==='COMPRAR')bullCount++;
@@ -603,12 +603,12 @@ function renderMTF(){
   else if(bearCount>=3)msg=`✅ Consenso BAJISTA (${bearCount} TF) — señal fuerte de venta`;
   else msg=`⚠ Mercado mixto — esperar confirmación`;
   consensus.textContent=msg;
-  consensus.style.color=bullCount>=3?'#00ff88':bearCount>=3?'#ff3355':'#888';
+  consensus.style.color=bullCount>=3?'#3ecf8e':bearCount>=3?'#f0616f':'#888';
 }
 
 function renderActionArea(){
   const a=analysis;if(!a)return;
-  const sc=a.signal==='COMPRAR'?'#00ff88':a.signal==='VENDER'?'#ff3355':'#888';
+  const sc=a.signal==='COMPRAR'?'#3ecf8e':a.signal==='VENDER'?'#f0616f':'#888';
   const el=document.getElementById('actionArea');
   if(!openTrade){
     const disabled=a.signal==='NEUTRO';
@@ -617,11 +617,11 @@ function renderActionArea(){
     const pricePct=openTrade.signal==='COMPRAR'?(a.price-openTrade.entry)/openTrade.entry:(openTrade.entry-a.price)/openTrade.entry;
     const pnl=openTrade.size*pricePct;
     const pnlPct=(pricePct*100).toFixed(2);
-    const pnlColor=pnl>=0?'#00ff88':'#ff3355';
-    el.innerHTML=`<div style="background:#0d0d18;border:1px solid ${openTrade.signal==='COMPRAR'?'#00ff8855':'#ff335555'};border-radius:10px;padding:12px">
+    const pnlColor=pnl>=0?'#3ecf8e':'#f0616f';
+    el.innerHTML=`<div style="background:#0d0d18;border:1px solid ${openTrade.signal==='COMPRAR'?'#3ecf8e55':'#f0616f55'};border-radius:10px;padding:12px">
       <div style="font-size:9px;color:#444;letter-spacing:2px;margin-bottom:6px">OPERACIÓN ABIERTA (DEMO) · ${openTrade.tf||currentTF}</div>
       <div style="display:flex;justify-content:space-between;margin-bottom:5px">
-        <span style="font-size:11px;color:${openTrade.signal==='COMPRAR'?'#00ff88':'#ff3355'};font-weight:700">${openTrade.signal} · ${openTrade.direction}</span>
+        <span style="font-size:11px;color:${openTrade.signal==='COMPRAR'?'#3ecf8e':'#f0616f'};font-weight:700">${openTrade.signal} · ${openTrade.direction}</span>
         <span style="font-size:11px;font-weight:700;color:${pnlColor}">${pnl>=0?'+':''}$${pnl.toFixed(2)} (${pnlPct}%)</span>
       </div>
       <div style="font-size:10px;color:#555;margin-bottom:8px">Entrada $${fp(openTrade.entry)} → Actual $${fp(a.price)} · SL $${fp(openTrade.sl)} · TP $${fp(openTrade.tp)}</div>
@@ -670,16 +670,16 @@ function closePaperTrade(reason){
 function updateCapitalDisplay(){
   const el=document.getElementById('capitalDisplay');
   el.textContent='$'+capital.toFixed(2);
-  el.style.color=capital>=INITIAL_CAPITAL?'#00ff88':'#ff3355';
+  el.style.color=capital>=INITIAL_CAPITAL?'#3ecf8e':'#f0616f';
 }
 
 function renderTrades(){
   const el=document.getElementById('tradesList');
   if(trades.length===0){el.innerHTML='<div style="text-align:center;padding:30px;color:#333"><div style="font-size:24px;margin-bottom:8px">📋</div><div style="font-size:11px">Sin operaciones aún</div></div>';return}
-  el.innerHTML=trades.map(t=>`<div class="trade-item" style="border-color:${t.pnl>=0?'#00ff8822':'#ff335522'};background:#0d0d18">
+  el.innerHTML=trades.map(t=>`<div class="trade-item" style="border-color:${t.pnl>=0?'#3ecf8e22':'#f0616f22'};background:#0d0d18">
     <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-      <span style="font-size:10px;font-weight:700;color:${t.signal==='COMPRAR'?'#00ff88':'#ff3355'}">${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf||'?'}</span>
-      <span style="font-size:11px;font-weight:700;color:${t.pnl>=0?'#00ff88':'#ff3355'}">${t.pnl>=0?'+':''}$${t.pnl.toFixed(2)} (${t.pnlPct>=0?'+':''}${t.pnlPct.toFixed(2)}%)</span>
+      <span style="font-size:10px;font-weight:700;color:${t.signal==='COMPRAR'?'#3ecf8e':'#f0616f'}">${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf||'?'}</span>
+      <span style="font-size:11px;font-weight:700;color:${t.pnl>=0?'#3ecf8e':'#f0616f'}">${t.pnl>=0?'+':''}$${t.pnl.toFixed(2)} (${t.pnlPct>=0?'+':''}${t.pnlPct.toFixed(2)}%)</span>
     </div>
     <div style="font-size:9px;color:#333">$${fp(t.entry)} → $${fp(t.exitPrice)} · ${t.reason} · ${t.openTime} · Conf ${t.confidence}%</div>
   </div>`).join('');
@@ -731,14 +731,14 @@ async function testConnection(){
     const data=await res.json();
     if(data.usdt!==undefined){
       document.getElementById('connectionStatus').textContent='✅ Conectado — Saldo: $'+data.usdt.toFixed(2)+' USDT';
-      document.getElementById('connectionStatus').style.color='#00ff88';
+      document.getElementById('connectionStatus').style.color='#3ecf8e';
     }else{
       document.getElementById('connectionStatus').textContent='✗ Error: '+(data.error||'Clave inválida');
-      document.getElementById('connectionStatus').style.color='#ff3355';
+      document.getElementById('connectionStatus').style.color='#f0616f';
     }
   }catch(e){
     document.getElementById('connectionStatus').textContent='✗ Sin conexión al backend';
-    document.getElementById('connectionStatus').style.color='#ff3355';
+    document.getElementById('connectionStatus').style.color='#f0616f';
   }
 }
 
@@ -886,8 +886,8 @@ async function drawTradeChart(t){
       ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();
       ctx.setLineDash([]);
     }
-    hLine(tpVal,'#00ff88');
-    hLine(slVal,'#ff3355');
+    hLine(tpVal,'#3ecf8e');
+    hLine(slVal,'#f0616f');
     hLine(entryVal,'#6666ff');
 
     const current=closes[closes.length-1];
@@ -898,7 +898,7 @@ async function drawTradeChart(t){
     if(priceEl){
       const changeFromEntryPct=((current-entryVal)/entryVal)*100;
       const favorableForTrade = t.signal==='COMPRAR' ? changeFromEntryPct>=0 : changeFromEntryPct<=0;
-      priceEl.style.color=favorableForTrade?'#00ff88':'#ff3355';
+      priceEl.style.color=favorableForTrade?'#3ecf8e':'#f0616f';
       priceEl.textContent=`$${current.toFixed(current<10?4:2)} (${changeFromEntryPct>=0?'+':''}${changeFromEntryPct.toFixed(2)}% desde entrada)`;
     }
 
@@ -910,7 +910,7 @@ async function drawTradeChart(t){
       const commission=size*0.001*2; // 0.1% por lado, ida y vuelta
       const pnl=(size*pricePct)-commission;
       const pnlPct=(pnl/size)*100;
-      const color=pnl>=0?'#00ff88':'#ff3355';
+      const color=pnl>=0?'#3ecf8e':'#f0616f';
       pnlEl.style.color=color;
       pnlEl.textContent=`${pnl>=0?'+':''}$${pnl.toFixed(2)} (${pnl>=0?'+':''}${pnlPct.toFixed(2)}%) neto`;
     }
@@ -922,7 +922,7 @@ async function drawTradeChart(t){
     for(let i=0;i<n;i++){
       const x=slot*i+slot/2;
       const isUp=closes[i]>=opens[i];
-      const color=isUp?'#00ff88':'#ff3355';
+      const color=isUp?'#3ecf8e':'#f0616f';
       ctx.strokeStyle=color;
       ctx.lineWidth=1;
       // mecha (high-low)
@@ -939,7 +939,7 @@ async function drawTradeChart(t){
     }
 
     // punto del precio actual
-    ctx.fillStyle=inProfit?'#00ff88':'#ff3355';
+    ctx.fillStyle=inProfit?'#3ecf8e':'#f0616f';
     ctx.beginPath();
     ctx.arc(w-2,toY(current),3,0,Math.PI*2);
     ctx.fill();
@@ -964,7 +964,7 @@ async function fetchServerState(){
     return s;
   }catch(e){
     document.getElementById('serverAutoStatus').textContent='⚠ Sin conexión al servidor';
-    document.getElementById('serverAutoStatus').style.color='#ff3355';
+    document.getElementById('serverAutoStatus').style.color='#f0616f';
   }
 }
 
@@ -1054,8 +1054,8 @@ async function testDailySummary(){
 function renderServerState(s){
   if(!s)return;
   document.getElementById('serverAutoStatus').textContent=s.autoMode?'🟢 ACTIVO (Servidor 24/7)':'⚪ INACTIVO';
-  document.getElementById('serverAutoStatus').style.color=s.autoMode?'#00ff88':'#666';
-  document.getElementById('serverAutoDot').style.background=s.autoMode?'#00ff88':'#333';
+  document.getElementById('serverAutoStatus').style.color=s.autoMode?'#3ecf8e':'#666';
+  document.getElementById('serverAutoDot').style.background=s.autoMode?'#3ecf8e':'#333';
   const btn=document.getElementById('serverAutoBtn');
   btn.disabled=false;
   btn.textContent=s.autoMode?'⏸ PAUSAR AUTO (Servidor)':'▶ ACTIVAR AUTO (Servidor)';
@@ -1065,7 +1065,7 @@ function renderServerState(s){
   const headerCapEl=document.getElementById('capitalDisplay');
   if(headerCapEl){
     headerCapEl.textContent='$'+s.capital.toFixed(2);
-    headerCapEl.style.color=s.capital>=1000?'#00ff88':'#ff3355';
+    headerCapEl.style.color=s.capital>=1000?'#3ecf8e':'#f0616f';
   }
   const modeLabelEl=document.getElementById('modeLabel');
   if(modeLabelEl){
@@ -1073,14 +1073,14 @@ function renderServerState(s){
   }
   const pnlEl=document.getElementById('serverDailyPnl');
   pnlEl.textContent=(s.dailyPnl>=0?'+':'')+'$'+s.dailyPnl.toFixed(2);
-  pnlEl.style.color=s.dailyPnl>=0?'#00ff88':'#ff3355';
+  pnlEl.style.color=s.dailyPnl>=0?'#3ecf8e':'#f0616f';
   document.getElementById('serverTradesCount').textContent=s.trades.length;
 
   const streakEl=document.getElementById('serverStreak');
   if(s.consecutiveLosses>=2){
     streakEl.style.display='block';
     streakEl.textContent='❄️ '+s.consecutiveLosses+' pérdidas seguidas';
-    streakEl.style.color='#ff3355';
+    streakEl.style.color='#f0616f';
   }else{
     streakEl.style.display='none';
   }
@@ -1092,14 +1092,14 @@ function renderServerState(s){
     otEl.innerHTML=openTrades.map(t=>`<div class="mini-card" style="text-align:left;padding:8px;margin-bottom:6px">
       <div style="font-size:9px;color:#8888ff;margin-bottom:4px">🔵 OPERACIÓN ABIERTA (real, servidor) · ${t.strategy||'Reversión'}${t.trailingActive?' · 🔒 Trailing activo':''}${t.partialTaken?' · 💰 50% asegurado':''}${t.trendDisagreeCount>0?` · ⚠️ Vigía 15m: ${t.trendDisagreeCount}/${subSlThresholdMin}`:''}</div>
       <div style="font-size:11px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-        <span style="padding:2px 8px;border-radius:4px;font-weight:700;font-size:10px;background:${t.direction==='SHORT'?'#ff335533':'#00ff8833'};color:${t.direction==='SHORT'?'#ff3355':'#00ff88'}">${t.direction==='SHORT'?'🐻 SHORT':'🐂 LARGO'}</span>
+        <span style="padding:2px 8px;border-radius:4px;font-weight:700;font-size:10px;background:${t.direction==='SHORT'?'#f0616f33':'#3ecf8e33'};color:${t.direction==='SHORT'?'#f0616f':'#3ecf8e'}">${t.direction==='SHORT'?'🐻 SHORT':'🐂 LARGO'}</span>
         <span>${t.signal} · ${t.pair.replace('USDT','/USDT')} · ${t.tf}</span>
         <span id="price-${t.pair}" style="margin-left:auto;font-size:11px;font-weight:700;color:#8888ff">— Precio: cargando...</span>
       </div>
       <div id="pnl-${t.pair}" style="font-size:16px;font-weight:700;margin:4px 0;color:#666">Calculando...</div>
       <canvas id="chart-${t.pair}" width="300" height="70" style="width:100%;height:70px;display:block;margin:6px 0;background:var(--chart-bg);border-radius:6px"></canvas></canvas>
       <div style="font-size:9px;color:#666;display:flex;gap:10px;justify-content:center;margin-bottom:4px">
-        <span style="color:#8888ff">— Entrada</span><span style="color:#00ff88">— TP</span><span style="color:#ff3355">— SL</span>
+        <span style="color:#8888ff">— Entrada</span><span style="color:#3ecf8e">— TP</span><span style="color:#f0616f">— SL</span>
       </div>
       <div style="font-size:10px;color:#666;margin-top:4px">Entrada $${t.entry} · TP $${t.tp?.toFixed?t.tp.toFixed(2):t.tp} · SL $${t.sl?.toFixed?t.sl.toFixed(2):t.sl}</div>
       <div style="font-size:9px;color:#444;margin-top:2px">Confianza ${t.confidence}% · Abierto: ${t.openTime}</div>
@@ -1115,7 +1115,7 @@ function renderServerState(s){
     listEl.innerHTML='Sin operaciones cerradas aún';
   }else{
     listEl.innerHTML=[...s.trades].reverse().slice(0,10).map(t=>{
-      const c=t.pnl>=0?'#00ff88':'#ff3355';
+      const c=t.pnl>=0?'#3ecf8e':'#f0616f';
       return `<div class="trade-item" style="border-color:${c}33;padding:8px">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span style="display:flex;align-items:center;gap:5px">
