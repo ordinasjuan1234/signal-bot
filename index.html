@@ -853,6 +853,34 @@ function exportTrades(){
 // ── Server-backed AUTO (backend real 24/7) ────────────────
 let serverPollInterval=null;
 
+// ADX en vivo, calculado del lado del navegador con los mismos datos del
+// gráfico, para ver en tiempo real si el mercado está lateral o en tendencia.
+function calcADXClient(highs,lows,closes,period=14){
+  const n=highs.length;
+  if(n<period*2+1)return null;
+  let plusDM=[],minusDM=[],tr=[];
+  for(let i=1;i<n;i++){
+    const upMove=highs[i]-highs[i-1];
+    const downMove=lows[i-1]-lows[i];
+    plusDM.push(upMove>downMove&&upMove>0?upMove:0);
+    minusDM.push(downMove>upMove&&downMove>0?downMove:0);
+    tr.push(Math.max(highs[i]-lows[i],Math.abs(highs[i]-closes[i-1]),Math.abs(lows[i]-closes[i-1])));
+  }
+  const wilder=(arr)=>{
+    let s=[arr.slice(0,period).reduce((a,b)=>a+b,0)];
+    for(let i=period;i<arr.length;i++)s.push(s[s.length-1]-(s[s.length-1]/period)+arr[i]);
+    return s;
+  };
+  const sTR=wilder(tr),sPlus=wilder(plusDM),sMinus=wilder(minusDM);
+  const plusDI=sPlus.map((v,i)=>sTR[i]>0?(v/sTR[i])*100:0);
+  const minusDI=sMinus.map((v,i)=>sTR[i]>0?(v/sTR[i])*100:0);
+  const dx=plusDI.map((v,i)=>{const sum=v+minusDI[i];return sum===0?0:(Math.abs(v-minusDI[i])/sum)*100});
+  if(dx.length<period)return null;
+  let adx=dx.slice(0,period).reduce((a,b)=>a+b,0)/period;
+  for(let i=period;i<dx.length;i++)adx=(adx*(period-1)+dx[i])/period;
+  return adx;
+}
+
 async function drawTradeChart(t){
   const canvas=document.getElementById('chart-'+t.pair);
   if(!canvas)return;
@@ -879,21 +907,38 @@ async function drawTradeChart(t){
     const tpVal=typeof t.tp==='number'?t.tp:parseFloat(t.tp);
     const slVal=typeof t.sl==='number'?t.sl:parseFloat(t.sl);
     const entryVal=typeof t.entry==='number'?t.entry:parseFloat(t.entry);
-    const allVals=[...highs,...lows,tpVal,slVal,entryVal];
+
+    // Rango de las últimas 15 velas — el mismo que usa la estrategia "Rango"
+    // del backend para decidir si opera el rebote piso/techo.
+    const rangeHighs=highs.slice(-15), rangeLows=lows.slice(-15);
+    const rangeTop=Math.max(...rangeHighs), rangeBottom=Math.min(...rangeLows);
+    const adxLive=calcADXClient(highs,lows,closes);
+
+    const allVals=[...highs,...lows,tpVal,slVal,entryVal,rangeTop,rangeBottom];
     const min=Math.min(...allVals), max=Math.max(...allVals);
     const range=(max-min)||1;
     const pad=6;
     const toY=v=>pad+(h-pad*2)-((v-min)/range)*(h-pad*2);
 
-    function hLine(v,color){
+    function hLine(v,color,dash){
       const y=toY(v);
-      ctx.strokeStyle=color;ctx.setLineDash([3,3]);ctx.lineWidth=1;
+      ctx.strokeStyle=color;ctx.setLineDash(dash||[3,3]);ctx.lineWidth=1;
       ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();
       ctx.setLineDash([]);
     }
+    // Rango (piso/techo) primero, más finito y punteado distinto, atrás de todo
+    hLine(rangeTop,'#ffaa0088',[2,4]);
+    hLine(rangeBottom,'#ffaa0088',[2,4]);
     hLine(tpVal,'#00ff88');
     hLine(slVal,'#ff3355');
     hLine(entryVal,'#6666ff');
+
+    // Texto de ADX en vivo, arriba a la izquierda del gráfico
+    if(adxLive!==null){
+      ctx.font='9px monospace';
+      ctx.fillStyle=adxLive<20?'#ffaa00':'#8888ff';
+      ctx.fillText(`ADX ${adxLive.toFixed(1)} ${adxLive<20?'· lateral':'· tendencia'}`,4,10);
+    }
 
     const current=closes[closes.length-1];
     const inProfit = t.signal==='COMPRAR' ? current>entryVal : current<entryVal;
@@ -1104,7 +1149,7 @@ function renderServerState(s){
       <div id="pnl-${t.pair}" style="font-size:16px;font-weight:700;margin:4px 0;color:#666">Calculando...</div>
       <canvas id="chart-${t.pair}" width="300" height="70" style="width:100%;height:70px;display:block;margin:6px 0;background:var(--chart-bg);border-radius:6px"></canvas></canvas>
       <div style="font-size:9px;color:#666;display:flex;gap:10px;justify-content:center;margin-bottom:4px">
-        <span style="color:#8888ff">— Entrada</span><span style="color:#00ff88">— TP</span><span style="color:#ff3355">— SL</span>
+        <span style="color:#8888ff">— Entrada</span><span style="color:#00ff88">— TP</span><span style="color:#ff3355">— SL</span><span style="color:#ffaa00">┄ Rango</span>
       </div>
       <div style="font-size:10px;color:#666;margin-top:4px">Entrada $${t.entry} · TP $${t.tp?.toFixed?t.tp.toFixed(2):t.tp} · SL $${t.sl?.toFixed?t.sl.toFixed(2):t.sl}</div>
       <div style="font-size:9px;color:#444;margin-top:2px">Confianza ${t.confidence}% · Abierto: ${t.openTime}</div>
