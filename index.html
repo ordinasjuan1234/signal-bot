@@ -881,24 +881,26 @@ function calcADXClient(highs,lows,closes,period=14){
   return adx;
 }
 
+const chartDrawGen={}; // controla que solo se dibuje el resultado más reciente por par, descartando llamadas atrasadas
+
 async function drawTradeChart(t){
   const canvas=document.getElementById('chart-'+t.pair);
   if(!canvas)return;
+  const myGen=(chartDrawGen[t.pair]=(chartDrawGen[t.pair]||0)+1);
   const ctx=canvas.getContext('2d');
   // Ajuste de alta resolución: sin esto, en pantallas retina/celulares el
   // gráfico se dibuja "chico" y se estira, quedando pixelado.
   const dpr=window.devicePixelRatio||1;
   const rect=canvas.getBoundingClientRect();
   const w=rect.width||300, h=rect.height||70;
-  if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){
-    canvas.width=Math.round(w*dpr);
-    canvas.height=Math.round(h*dpr);
-  }
+  canvas.width=Math.round(w*dpr);
+  canvas.height=Math.round(h*dpr);
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,w,h);
   try{
     const res=await fetch(`https://data-api.binance.vision/api/v3/klines?symbol=${t.pair}&interval=${t.tf}&limit=50`);
     const data=await res.json();
+    if(chartDrawGen[t.pair]!==myGen)return; // llegó atrasado, ya hay un dibujo más nuevo — no pisarlo
     const opens=data.map(k=>parseFloat(k[1]));
     const highs=data.map(k=>parseFloat(k[2]));
     const lows=data.map(k=>parseFloat(k[3]));
@@ -994,6 +996,7 @@ async function drawTradeChart(t){
     ctx.arc(w-2,toY(current),3,0,Math.PI*2);
     ctx.fill();
   }catch(e){
+    if(chartDrawGen[t.pair]!==myGen)return; // atrasado, no pisar un dibujo más nuevo con un error viejo
     ctx.fillStyle='#444';ctx.font='10px monospace';
     ctx.fillText('Gráfico no disponible',8,h/2);
     const pnlEl=document.getElementById('pnl-'+t.pair);
