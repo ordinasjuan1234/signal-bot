@@ -1167,14 +1167,14 @@ function renderServerState(s){
   const todayListEl=document.getElementById('todayTradesList');
   if(summaryEl&&todayListEl){
     if(todayTrades.length===0){
-      summaryEl.textContent='Sin operaciones cerradas hoy todavía';
+      summaryEl.textContent=`${todayStr} · Sin operaciones cerradas hoy todavía`;
       todayListEl.innerHTML='';
     }else{
       const wins=todayTrades.filter(t=>t.pnl>=0).length;
       const losses=todayTrades.length-wins;
       const totalPnl=todayTrades.reduce((a,t)=>a+t.pnl,0);
       const pnlColor=totalPnl>=0?'#00ff88':'#ff3355';
-      summaryEl.innerHTML=`${todayTrades.length} operaciones · ${wins} ganadas / ${losses} perdidas · PnL del día: <span style="color:${pnlColor};font-weight:700">${totalPnl>=0?'+':''}$${totalPnl.toFixed(2)}</span>`;
+      summaryEl.innerHTML=`<span style="color:#8888ff">${todayStr}</span> · ${todayTrades.length} operaciones · ${wins} ganadas / ${losses} perdidas · PnL del día: <span style="color:${pnlColor};font-weight:700">${totalPnl>=0?'+':''}$${totalPnl.toFixed(2)}</span>`;
       todayListEl.innerHTML=[...todayTrades].reverse().map(t=>{
         const c=t.pnl>=0?'#00ff88':'#ff3355';
         const hora=(t.closeTime.split(', ')[1]||'').slice(0,5);
