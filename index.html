@@ -219,6 +219,10 @@ body.light .tf-btn.active{background:#e4e4ff;border-color:#6666ff;color:#4444dd}
       <div id="todaySummary" style="font-size:10px;color:#666;margin-bottom:8px">Cargando...</div>
       <div id="todayTradesList" style="font-size:10px;color:#444;margin-bottom:6px">Cargando...</div>
 
+      <div class="card-label" style="margin-top:14px">👻 SEGUIMIENTO FANTASMA (¿el Sub-SL ayuda o perjudica?)</div>
+      <div id="ghostSummary" style="font-size:10px;color:#666;margin-bottom:8px">Cargando...</div>
+      <div id="ghostList" style="font-size:10px;color:#444;margin-bottom:6px"></div>
+
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
         <div class="card-label" style="margin-top:0">ÚLTIMOS TRADES DEL SERVIDOR</div>
         <button onclick="exportServerTrades()" class="btn btn-blue" style="padding:5px 10px;font-size:9px">↓ EXPORTAR CSV REAL</button>
@@ -1192,6 +1196,33 @@ function renderServerState(s){
           </div>
           <div style="color:#666;margin-top:3px">$${t.entry} → $${t.exitPrice?.toFixed?t.exitPrice.toFixed(2):t.exitPrice} · ${t.reason}</div>
           <div style="color:#444;margin-top:2px">${t.strategy||'Reversión'} · Confianza ${t.confidence}%</div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // ── Seguimiento fantasma: ¿el Sub-SL ayuda o perjudica? ──
+  const ghostSummaryEl=document.getElementById('ghostSummary');
+  const ghostListEl=document.getElementById('ghostList');
+  if(ghostSummaryEl&&ghostListEl){
+    const active=(s.ghostTrades||[]).length;
+    const results=s.ghostResults||[];
+    if(results.length===0){
+      ghostSummaryEl.textContent=`${active} en seguimiento ahora · sin resultados todavía`;
+      ghostListEl.innerHTML='';
+    }else{
+      const wouldHaveWon=results.filter(g=>g.hypotheticalPnl>=0).length;
+      const wouldHaveLost=results.length-wouldHaveWon;
+      const totalHypo=results.reduce((a,g)=>a+g.hypotheticalPnl,0);
+      const color=totalHypo>=0?'#00ff88':'#ff3355';
+      ghostSummaryEl.innerHTML=`${active} en seguimiento ahora · ${results.length} resueltos: ${wouldHaveWon} hubieran ganado / ${wouldHaveLost} hubieran perdido · PnL hipotético total: <span style="color:${color};font-weight:700">${totalHypo>=0?'+':''}$${totalHypo.toFixed(2)}</span>`;
+      ghostListEl.innerHTML=results.slice(0,5).map(g=>{
+        const c=g.hypotheticalPnl>=0?'#00ff88':'#ff3355';
+        return `<div class="trade-item" style="border-color:${c}33;padding:6px;margin-bottom:5px">
+          <div style="display:flex;justify-content:space-between">
+            <span>${g.pair.replace('USDT','/USDT')} · ${g.tf} · ${g.strategy}</span>
+            <span style="color:${c};font-weight:700">${g.resolved} hipotético: ${g.hypotheticalPnl>=0?'+':''}$${g.hypotheticalPnl.toFixed(2)}</span>
+          </div>
         </div>`;
       }).join('');
     }
