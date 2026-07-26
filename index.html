@@ -400,6 +400,10 @@ body.light .tf-btn.active{background:#e4e4ff;border-color:#6666ff;color:#4444dd}
 
   <!-- TRADES TAB -->
   <div id="tab-trades" style="display:none">
+    <div class="mini-card" style="margin-bottom:10px;text-align:center">
+      <div class="mini-label">CAPITAL DEMO (LOCAL, separado del servidor real)</div>
+      <div class="mini-value" id="demoCapitalDisplay" style="color:#8888ff">$1000.00</div>
+    </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="font-size:10px;color:#333;letter-spacing:2px">HISTORIAL (DEMO LOCAL)</div>
       <button onclick="exportTrades()" class="btn btn-blue" style="padding:5px 10px;font-size:9px">↓ EXPORTAR</button>
@@ -677,7 +681,8 @@ function closePaperTrade(reason){
 }
 
 function updateCapitalDisplay(){
-  const el=document.getElementById('capitalDisplay');
+  const el=document.getElementById('demoCapitalDisplay');
+  if(!el)return;
   el.textContent='$'+capital.toFixed(2);
   el.style.color=capital>=INITIAL_CAPITAL?'#00ff88':'#ff3355';
 }
