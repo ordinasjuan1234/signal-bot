@@ -308,19 +308,29 @@ body.light .tf-btn.active{background:#e4e4ff;border-color:#6666ff;color:#4444dd}
     </div>
 
     <div class="card" style="border-color:#ff880033">
-      <div class="card-label" style="color:#ff8800">⚡ MODO REAL — BINANCE</div>
-      <div style="margin-bottom:8px">
-        <div style="font-size:10px;color:#555;margin-bottom:4px">API Key</div>
-        <input type="password" id="apiKeyInput" placeholder="Tu API Key de Binance" style="width:100%;margin-bottom:6px" value="">
-        <div style="font-size:10px;color:#555;margin-bottom:4px">Secret Key</div>
-        <input type="password" id="apiSecretInput" placeholder="Tu Secret Key de Binance" style="width:100%;margin-bottom:8px" value="">
-        <div style="display:flex;gap:6px">
-          <button onclick="saveApiKeys()" class="btn btn-orange" style="flex:2;padding:10px 0">💾 Guardar claves</button>
-          <button onclick="testConnection()" class="btn btn-blue" style="flex:1;padding:10px 0">🔌 Probar</button>
-        </div>
-        <div id="connectionStatus" style="margin-top:8px;font-size:10px;color:#444;text-align:center"></div>
+      <div class="card-label" style="color:#ff8800">⚡ MODO DE OPERACIÓN</div>
+      <div id="modeStatus" style="font-size:12px;font-weight:700;margin-bottom:8px;text-align:center;padding:8px;border-radius:8px">Cargando modo actual...</div>
+
+      <div style="display:flex;gap:4px;margin-bottom:10px" id="modeSelector">
+        <button class="tf-btn active" data-mode="demo" onclick="setTradingMode(this)" style="flex:1">DEMO</button>
+        <button class="tf-btn" data-mode="testnet" onclick="setTradingMode(this)" style="flex:1">TESTNET</button>
+        <button class="tf-btn" data-mode="real" onclick="setTradingMode(this)" style="flex:1;color:#ff8800">⚠ REAL</button>
       </div>
-      <div style="font-size:9px;color:#333;line-height:1.6">⚠ Estas claves se guardan solo en este navegador (cookies). El modo real automático 24/7 todavía corre en modo demo — la ejecución de órdenes reales en el servidor está pendiente de implementar.</div>
+      <div style="font-size:9px;color:#333;margin-bottom:10px">DEMO = 100% simulado. TESTNET = red de pruebas de Binance, sin plata real. REAL = plata de verdad, cuidado.</div>
+
+      <div id="confirmRiskBox" style="display:none;margin-bottom:10px;padding:8px;border:1px solid #ff8800;border-radius:8px">
+        <div style="font-size:10px;color:#ff8800;margin-bottom:6px">Para activar Testnet o Real por primera vez, escribí exactamente: <b>ENTIENDO EL RIESGO</b></div>
+        <input type="text" id="confirmRiskInput" placeholder="Escribí acá..." style="width:100%;margin-bottom:6px">
+        <button onclick="confirmRisk()" class="btn btn-orange" style="width:100%;padding:8px 0">Confirmar</button>
+      </div>
+
+      <button onclick="checkRealBalance()" class="btn btn-blue" style="width:100%;padding:8px 0;margin-bottom:10px">🔌 Ver saldo real (Testnet/Real)</button>
+      <div id="connectionStatus" style="margin-bottom:10px;font-size:10px;color:#444;text-align:center"></div>
+
+      <button onclick="activateKillSwitch()" class="btn btn-red" style="width:100%;padding:12px 0;font-weight:800;margin-bottom:8px">🛑 KILL SWITCH — DETENER TODO YA</button>
+      <div id="killSwitchStatus" style="font-size:9px;color:#333;text-align:center"></div>
+
+      <div style="font-size:9px;color:#333;line-height:1.6;margin-top:8px">⚠ Las claves de Binance ahora viven en variables de entorno del servidor (Render), nunca en el navegador. El bot automático todavía NO ejecuta órdenes reales aunque estés en Testnet/Real — eso es el próximo paso, una vez que confirmemos que esta base funciona bien.</div>
     </div>
 
     <div class="card">
@@ -724,38 +734,94 @@ function checkAutoTrade(){
 }
 
 // ── Real Mode API Keys (stored locally, for future backend integration) ──
-let apiKey=_get('apiKey')||'';
-let apiSecret=_get('apiSecret')||'';
+// (las claves de Binance ya no se manejan del lado del navegador — ver variables de entorno del servidor)
 
-function saveApiKeys(){
-  const key=document.getElementById('apiKeyInput').value.trim();
-  const secret=document.getElementById('apiSecretInput').value.trim();
-  if(!key||!secret){document.getElementById('connectionStatus').textContent='⚠ Ingresá ambas claves';return}
-  apiKey=key;apiSecret=secret;
-  _set('apiKey',key);_set('apiSecret',secret);
-  document.getElementById('apiKeyInput').value='';
-  document.getElementById('apiSecretInput').value='';
-  document.getElementById('connectionStatus').textContent='✓ Claves guardadas';
-  testConnection();
+let currentTradingMode='demo';
+
+function setTradingMode(btn){
+  const mode=btn.dataset.mode;
+  if(mode==='demo'){
+    executeModeSet(mode);
+    return;
+  }
+  // Testnet/Real necesitan confirmación explícita si todavía no se dio
+  document.getElementById('confirmRiskBox').dataset.pendingMode=mode;
+  executeModeSet(mode);
 }
 
-async function testConnection(){
-  if(!apiKey||!apiSecret){document.getElementById('connectionStatus').textContent='⚠ Primero guardá las claves';return}
-  document.getElementById('connectionStatus').textContent='🔄 Probando conexión...';
-  document.getElementById('connectionStatus').style.color='#888';
+async function executeModeSet(mode){
   try{
-    const res=await fetch(BACKEND_URL+'/balance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey,apiSecret})});
+    const res=await fetch(BACKEND_URL+'/mode/set',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode})});
+    const data=await res.json();
+    if(data.error){
+      if(data.error.includes('confirmación')){
+        document.getElementById('confirmRiskBox').style.display='block';
+        document.getElementById('confirmRiskBox').dataset.pendingMode=mode;
+      }
+      alert('Error: '+data.error);
+      await fetchServerState();
+      return;
+    }
+    document.getElementById('confirmRiskBox').style.display='none';
+    await fetchServerState();
+  }catch(e){
+    alert('Error conectando al servidor: '+e.message);
+  }
+}
+
+async function confirmRisk(){
+  const text=document.getElementById('confirmRiskInput').value.trim();
+  try{
+    const res=await fetch(BACKEND_URL+'/mode/confirm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({confirmText:text})});
+    const data=await res.json();
+    if(data.error){alert('Error: '+data.error);return}
+    const pendingMode=document.getElementById('confirmRiskBox').dataset.pendingMode;
+    document.getElementById('confirmRiskBox').style.display='none';
+    if(pendingMode)executeModeSet(pendingMode);
+  }catch(e){
+    alert('Error conectando al servidor: '+e.message);
+  }
+}
+
+async function checkRealBalance(){
+  const statusEl=document.getElementById('connectionStatus');
+  const mode=currentTradingMode==='demo'?'testnet':currentTradingMode;
+  statusEl.textContent='🔄 Consultando saldo de '+mode.toUpperCase()+'...';
+  statusEl.style.color='#888';
+  try{
+    const res=await fetch(BACKEND_URL+'/real-balance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode})});
     const data=await res.json();
     if(data.usdt!==undefined){
-      document.getElementById('connectionStatus').textContent='✅ Conectado — Saldo: $'+data.usdt.toFixed(2)+' USDT';
-      document.getElementById('connectionStatus').style.color='#00ff88';
+      statusEl.textContent='✅ Conectado ('+mode.toUpperCase()+') — Saldo: $'+data.usdt.toFixed(2)+' USDT';
+      statusEl.style.color='#00ff88';
     }else{
-      document.getElementById('connectionStatus').textContent='✗ Error: '+(data.error||'Clave inválida');
-      document.getElementById('connectionStatus').style.color='#ff3355';
+      statusEl.textContent='✗ Error: '+(data.error||'No se pudo conectar');
+      statusEl.style.color='#ff3355';
     }
   }catch(e){
-    document.getElementById('connectionStatus').textContent='✗ Sin conexión al backend';
-    document.getElementById('connectionStatus').style.color='#ff3355';
+    statusEl.textContent='✗ Sin conexión al backend';
+    statusEl.style.color='#ff3355';
+  }
+}
+
+async function activateKillSwitch(){
+  if(!confirm('¿Seguro? Esto detiene TODO de inmediato: fuerza modo DEMO, pausa el AUTO. Tenés que resetearlo manualmente después para volver a operar.'))return;
+  try{
+    await fetch(BACKEND_URL+'/kill',{method:'POST'});
+    await fetchServerState();
+    alert('Kill switch activado. Todo detenido.');
+  }catch(e){
+    alert('Error conectando al servidor: '+e.message);
+  }
+}
+
+async function resetKillSwitch(){
+  if(!confirm('¿Resetear el kill switch? Vas a poder volver a elegir un modo distinto a demo.'))return;
+  try{
+    await fetch(BACKEND_URL+'/kill/reset',{method:'POST'});
+    await fetchServerState();
+  }catch(e){
+    alert('Error conectando al servidor: '+e.message);
   }
 }
 
@@ -1280,6 +1346,30 @@ function renderServerState(s){
     document.querySelectorAll('#tpMultSelector .tf-btn').forEach(b=>{
       b.classList.toggle('active', parseFloat(b.dataset.mult)===tpAtrMultiplier);
     });
+  }
+  if(s.tradingMode!==undefined){
+    currentTradingMode=s.tradingMode;
+    document.querySelectorAll('#modeSelector .tf-btn').forEach(b=>{
+      b.classList.toggle('active', b.dataset.mode===currentTradingMode);
+    });
+    const modeStatusEl=document.getElementById('modeStatus');
+    if(modeStatusEl){
+      const modeColors={demo:'#00ff88',testnet:'#8888ff',real:'#ff3355'};
+      const modeLabels={demo:'🟢 DEMO — 100% simulado',testnet:'🔵 TESTNET — red de pruebas Binance',real:'🔴 REAL — ¡plata de verdad!'};
+      modeStatusEl.textContent=modeLabels[currentTradingMode]||currentTradingMode;
+      modeStatusEl.style.color=modeColors[currentTradingMode]||'#888';
+      modeStatusEl.style.background=(modeColors[currentTradingMode]||'#888')+'22';
+    }
+  }
+  const killEl=document.getElementById('killSwitchStatus');
+  if(killEl){
+    if(s.killSwitchActive){
+      killEl.innerHTML='🛑 Kill switch ACTIVO — todo forzado a demo. <button onclick="resetKillSwitch()" class="btn btn-blue" style="padding:3px 8px;font-size:9px;margin-left:6px">Resetear</button>';
+      killEl.style.color='#ff3355';
+    }else{
+      killEl.textContent='Kill switch inactivo';
+      killEl.style.color='#333';
+    }
   }
   if(s.minConfidence!==undefined){
     document.getElementById('minConfidence').value=s.minConfidence;
