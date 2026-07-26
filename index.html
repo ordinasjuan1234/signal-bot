@@ -435,6 +435,7 @@ let pair='BTCUSDT';
 let currentTF='15m';
 let analysis=null;
 let capital=parseFloat(_get('capital'))||1000;
+let activeTabName='signal';
 let openTrade=null;
 try{const s=_get('openTrade');if(s&&s!=='null')openTrade=JSON.parse(s)}catch(e){}
 let trades=[];
@@ -682,9 +683,11 @@ function closePaperTrade(reason){
 
 function updateCapitalDisplay(){
   const el=document.getElementById('demoCapitalDisplay');
-  if(!el)return;
-  el.textContent='$'+capital.toFixed(2);
-  el.style.color=capital>=INITIAL_CAPITAL?'#00ff88':'#ff3355';
+  if(el){
+    el.textContent='$'+capital.toFixed(2);
+    el.style.color=capital>=INITIAL_CAPITAL?'#00ff88':'#ff3355';
+  }
+  refreshHeaderCapital();
 }
 
 function renderTrades(){
@@ -1124,11 +1127,7 @@ function renderServerState(s){
   btn.className=s.autoMode?'btn btn-orange':'btn btn-blue';
 
   document.getElementById('serverCapital').textContent='$'+s.capital.toFixed(2);
-  const headerCapEl=document.getElementById('capitalDisplay');
-  if(headerCapEl){
-    headerCapEl.textContent='$'+s.capital.toFixed(2);
-    headerCapEl.style.color=s.capital>=1000?'#00ff88':'#ff3355';
-  }
+  refreshHeaderCapital();
   const modeLabelEl=document.getElementById('modeLabel');
   if(modeLabelEl){
     modeLabelEl.textContent=s.autoMode?'SERVIDOR 24/7':'SERVIDOR';
@@ -1300,7 +1299,22 @@ function startServerPolling(){
 }
 
 // ── Navigation ────────────────────────────────────────────
+function refreshHeaderCapital(){
+  const el=document.getElementById('capitalDisplay');
+  if(!el)return;
+  if(activeTabName==='auto'){
+    if(lastServerState){
+      el.textContent='$'+lastServerState.capital.toFixed(2);
+      el.style.color=lastServerState.capital>=1000?'#00ff88':'#ff3355';
+    }
+  }else{
+    el.textContent='$'+capital.toFixed(2);
+    el.style.color=capital>=INITIAL_CAPITAL?'#00ff88':'#ff3355';
+  }
+}
+
 function switchTab(tab){
+  activeTabName=tab;
   ['signal','auto','risk','trades'].forEach((t,i)=>{
     document.getElementById('tab-'+t).style.display=t===tab?'block':'none';
     document.querySelectorAll('.tab')[i].classList.toggle('active',t===tab);
@@ -1308,6 +1322,7 @@ function switchTab(tab){
   if(tab==='trades'){renderTrades();renderStreakInfo();}
   if(tab==='auto')startServerPolling();
   if(tab==='risk')calcRisk();
+  refreshHeaderCapital();
 }
 
 function setTF(tf,btn){
