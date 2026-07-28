@@ -334,6 +334,12 @@ body.light .tf-btn.active{background:#e4e4ff;border-color:#6666ff;color:#4444dd}
     </div>
 
     <div class="card">
+      <div class="card-label">🎯 EFECTIVIDAD (WIN RATE)</div>
+      <div style="font-size:9px;color:#333;margin-bottom:8px">Ganadas / total de operaciones cerradas, separado por modo. Se actualiza solo.</div>
+      <div id="effectivenessGrid" class="grid2" style="gap:8px"></div>
+    </div>
+
+    <div class="card">
       <div class="card-label">RESUMEN DIARIO</div>
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:10px;color:#555">Hora (Argentina)</span>
@@ -1085,6 +1091,35 @@ async function drawTradeChart(t){
   }
 }
 
+async function updateEffectivenessGrid(){
+  const grid=document.getElementById('effectivenessGrid');
+  if(!grid)return;
+  // Manual local (demo, guardado en cookies del navegador)
+  const manualTotal=trades.length;
+  const manualWins=trades.filter(t=>t.pnl>=0).length;
+  const manualWinRate=manualTotal>0?((manualWins/manualTotal)*100).toFixed(1):'0.0';
+
+  let s={demo:{total:0,wins:0,winRate:0},testnet:{total:0,wins:0,winRate:0},real:{total:0,wins:0,winRate:0}};
+  try{
+    const res=await fetch(BACKEND_URL+'/stats/all-modes');
+    const data=await res.json();
+    if(data.stats)s=data.stats;
+  }catch(e){}
+
+  const card=(label,color,winRate,wins,total)=>`
+    <div class="mini-card">
+      <div class="mini-label">${label}</div>
+      <div class="mini-value" style="color:${color}">${winRate}%</div>
+      <div style="font-size:8px;color:#444">${wins}/${total} op.</div>
+    </div>`;
+
+  grid.innerHTML =
+    card('MANUAL','#8888ff',manualWinRate,manualWins,manualTotal) +
+    card('AUTO DEMO','#00ff88',s.demo.winRate,s.demo.wins,s.demo.total) +
+    card('AUTO TESTNET','#ffaa00',s.testnet.winRate,s.testnet.wins,s.testnet.total) +
+    card('AUTO REAL','#ff3355',s.real.winRate,s.real.wins,s.real.total);
+}
+
 let lastServerState=null;
 async function fetchServerState(){
   try{
@@ -1092,6 +1127,7 @@ async function fetchServerState(){
     const s=await res.json();
     lastServerState=s;
     renderServerState(s);
+    updateEffectivenessGrid();
     return s;
   }catch(e){
     document.getElementById('serverAutoStatus').textContent='⚠ Sin conexión al servidor';
