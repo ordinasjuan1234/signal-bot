@@ -642,14 +642,19 @@ function renderActionArea(){
   const el=document.getElementById('actionArea');
   if(!openTrade){
     const disabled=a.signal==='NEUTRO';
-    el.innerHTML=`<button class="btn" onclick="openPaperTrade()" ${disabled?'disabled':''} style="width:100%;padding:12px 0;font-size:12px;letter-spacing:2px;background:${disabled?'#111':a.signal==='COMPRAR'?'#0d2d1a':'#2d0d0d'};border-color:${disabled?'#222':sc};color:${disabled?'#333':sc};cursor:${disabled?'not-allowed':'pointer'}">${disabled?'SIN SEÑAL ACTIVA':'▶ SIMULAR '+a.signal+' (DEMO)'}</button>`;
+    el.innerHTML=`<button class="btn" onclick="openPaperTrade()" ${disabled?'disabled':''} style="width:100%;padding:12px 0;font-size:12px;letter-spacing:2px;background:${disabled?'#111':a.signal==='COMPRAR'?'#0d2d1a':'#2d0d0d'};border-color:${disabled?'#222':sc};color:${disabled?'#333':sc};cursor:${disabled?'not-allowed':'pointer'}">${disabled?'SIN SEÑAL ACTIVA':'▶ SIMULAR '+a.signal+' (DEMO)'}</button>
+    <div style="font-size:9px;color:#333;margin:8px 0 4px;text-align:center">¿Ves algo distinto en 5m/15m? Forzá tu propio criterio, sin depender de la señal de arriba:</div>
+    <div style="display:flex;gap:6px">
+      <button class="btn" onclick="openPaperTrade('COMPRAR')" style="flex:1;padding:10px 0;font-size:10.5px;background:#0d2d1a33;border-color:#00ff8866;color:#00ff88">🐂 Forzar LARGO</button>
+      <button class="btn" onclick="openPaperTrade('VENDER')" style="flex:1;padding:10px 0;font-size:10.5px;background:#2d0d0d33;border-color:#ff335566;color:#ff3355">🐻 Forzar SHORT</button>
+    </div>`;
   }else{
     const pricePct=openTrade.signal==='COMPRAR'?(a.price-openTrade.entry)/openTrade.entry:(openTrade.entry-a.price)/openTrade.entry;
     const pnl=openTrade.size*pricePct;
     const pnlPct=(pricePct*100).toFixed(2);
     const pnlColor=pnl>=0?'#00ff88':'#ff3355';
     el.innerHTML=`<div style="background:#0d0d18;border:1px solid ${openTrade.signal==='COMPRAR'?'#00ff8855':'#ff335555'};border-radius:10px;padding:12px">
-      <div style="font-size:9px;color:#444;letter-spacing:2px;margin-bottom:6px">OPERACIÓN ABIERTA (DEMO) · ${openTrade.tf||currentTF}</div>
+      <div style="font-size:9px;color:#444;letter-spacing:2px;margin-bottom:6px">OPERACIÓN ABIERTA (DEMO) · ${openTrade.tf||currentTF}${openTrade.forced?' · 🖐 Forzada manualmente':''}</div>
       <div style="display:flex;justify-content:space-between;margin-bottom:5px">
         <span style="font-size:11px;color:${openTrade.signal==='COMPRAR'?'#00ff88':'#ff3355'};font-weight:700">${openTrade.signal} · ${openTrade.direction}</span>
         <span style="font-size:11px;font-weight:700;color:${pnlColor}">${pnl>=0?'+':''}$${pnl.toFixed(2)} (${pnlPct}%)</span>
@@ -665,10 +670,20 @@ function renderActionArea(){
 }
 
 // ── Paper Trading (demo local) ─────────────────────────────
-function openPaperTrade(){
-  if(!analysis||analysis.signal==='NEUTRO'||openTrade)return;
+function openPaperTrade(forcedSignal){
+  if(!analysis||openTrade)return;
+  const signal = forcedSignal || analysis.signal;
+  if(signal==='NEUTRO')return;
+  const direction = signal==='COMPRAR' ? 'LARGO' : 'SHORT';
+  const entry = analysis.price;
+  const atr = analysis.atr || entry*0.02;
+  // Si es una dirección forzada (contraria a lo que dice el análisis del
+  // momento), el TP/SL se arma con el mismo ATR pero en el sentido elegido —
+  // es tu criterio de corto plazo, no el algoritmo, el que decide acá.
+  const tp = signal==='COMPRAR' ? entry + atr*3 : entry - atr*3;
+  const sl = signal==='COMPRAR' ? entry - atr*1.5 : entry + atr*1.5;
   const size=capital*0.95;
-  openTrade={id:Date.now(),pair,signal:analysis.signal,direction:analysis.direction,entry:analysis.entry,tp:analysis.tp,sl:analysis.sl,qty:size/analysis.entry,size,tf:currentTF,openTime:new Date().toLocaleTimeString('es-AR'),confidence:analysis.confidence};
+  openTrade={id:Date.now(),pair,signal,direction,entry,tp,sl,qty:size/entry,size,tf:currentTF,openTime:new Date().toLocaleTimeString('es-AR'),confidence:analysis.confidence,forced:!!forcedSignal};
   _set('openTrade',JSON.stringify(openTrade));
   renderActionArea();
 }
