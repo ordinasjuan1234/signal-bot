@@ -832,14 +832,19 @@ async function resetKillSwitch(){
 }
 
 // ── Server config UI helpers (pair/TF selectors -> server config) ──
+let lastConfigEditTime = 0; // evita que un refresco automático pise un cambio que acabás de hacer
+
 function toggleAutoPair(btn){
+  lastConfigEditTime = Date.now();
   btn.classList.toggle('active');
   const p=btn.dataset.pair;
   if(btn.classList.contains('active')){if(!autoPairs.includes(p))autoPairs.push(p)}
   else{autoPairs=autoPairs.filter(x=>x!==p)}
   updateServerConfig();
 }
-function toggleAutoTF(btn){
+
+async function toggleAutoTF(btn){
+  lastConfigEditTime = Date.now();
   btn.classList.toggle('active');
   const tf=btn.dataset.tf;
   if(btn.classList.contains('active')){if(!autoTFs.includes(tf))autoTFs.push(tf)}
@@ -849,6 +854,7 @@ function toggleAutoTF(btn){
 
 let positionSizePct=20;
 function setPositionSize(btn){
+  lastConfigEditTime = Date.now();
   document.querySelectorAll('#positionSizeSelector .tf-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   positionSizePct=parseInt(btn.dataset.size);
@@ -857,6 +863,7 @@ function setPositionSize(btn){
 
 let subSlThresholdMin=5;
 function setSubSlMin(btn){
+  lastConfigEditTime = Date.now();
   document.querySelectorAll('#subSlSelector .tf-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   subSlThresholdMin=parseInt(btn.dataset.min);
@@ -865,6 +872,7 @@ function setSubSlMin(btn){
 
 let tpAtrMultiplier=3;
 function setTpMult(btn){
+  lastConfigEditTime = Date.now();
   document.querySelectorAll('#tpMultSelector .tf-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   tpAtrMultiplier=parseFloat(btn.dataset.mult);
@@ -1353,31 +1361,32 @@ function renderServerState(s){
     }).join('');
   }
 
-  if(s.autoPairs){
+  const recentLocalEdit = (Date.now() - lastConfigEditTime) < 3000;
+  if(s.autoPairs && !recentLocalEdit){
     autoPairs=[...s.autoPairs];
     document.querySelectorAll('#autoPairSelector .tf-btn').forEach(b=>{
       b.classList.toggle('active', autoPairs.includes(b.dataset.pair));
     });
   }
-  if(s.autoTFs){
+  if(s.autoTFs && !recentLocalEdit){
     autoTFs=[...s.autoTFs];
     document.querySelectorAll('#autoTFSelector .tf-btn').forEach(b=>{
       b.classList.toggle('active', autoTFs.includes(b.dataset.tf));
     });
   }
-  if(s.positionSizePct!==undefined){
+  if(s.positionSizePct!==undefined && !recentLocalEdit){
     positionSizePct=s.positionSizePct;
     document.querySelectorAll('#positionSizeSelector .tf-btn').forEach(b=>{
       b.classList.toggle('active', parseInt(b.dataset.size)===positionSizePct);
     });
   }
-  if(s.subSlThresholdMin!==undefined){
+  if(s.subSlThresholdMin!==undefined && !recentLocalEdit){
     subSlThresholdMin=s.subSlThresholdMin;
     document.querySelectorAll('#subSlSelector .tf-btn').forEach(b=>{
       b.classList.toggle('active', parseInt(b.dataset.min)===subSlThresholdMin);
     });
   }
-  if(s.tpAtrMultiplier!==undefined){
+  if(s.tpAtrMultiplier!==undefined && !recentLocalEdit){
     tpAtrMultiplier=s.tpAtrMultiplier;
     document.querySelectorAll('#tpMultSelector .tf-btn').forEach(b=>{
       b.classList.toggle('active', parseFloat(b.dataset.mult)===tpAtrMultiplier);
