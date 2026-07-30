@@ -1311,7 +1311,7 @@ function renderServerState(s){
       const totalPnl=todayTrades.reduce((a,t)=>a+t.pnl,0);
       const pnlColor=totalPnl>=0?'#00ff88':'#ff3355';
       summaryEl.innerHTML=`<span style="color:#8888ff">${todayStr}</span> · ${todayTrades.length} operaciones · ${wins} ganadas / ${losses} perdidas · PnL del día: <span style="color:${pnlColor};font-weight:700">${totalPnl>=0?'+':''}$${totalPnl.toFixed(2)}</span>`;
-      todayListEl.innerHTML=[...todayTrades].reverse().map(t=>{
+      todayListEl.innerHTML=[...todayTrades].reverse().map((t,i)=>{
         const c=t.pnl>=0?'#00ff88':'#ff3355';
         const hora=(t.closeTime.split(', ')[1]||'').slice(0,5);
         return `<div class="trade-item" style="border-color:${c}33;padding:8px">
@@ -1323,10 +1323,54 @@ function renderServerState(s){
             </span>
             <span style="color:${c};font-weight:700">${t.pnl>=0?'+':''}$${t.pnl.toFixed(2)}</span>
           </div>
+          <canvas id="todayChart-${i}" style="width:100%;height:60px;display:block;margin:6px 0"></canvas>
           <div style="color:#666;margin-top:3px">$${t.entry} → $${t.exitPrice?.toFixed?t.exitPrice.toFixed(2):t.exitPrice} · ${t.reason}</div>
-          <div style="color:#444;margin-top:2px">${t.strategy||'Reversión'} · Confianza ${t.confidence}%</div>
+          <div style="color:#444;margin-top:2px">${t.strategy||'Reversión'}${t.subStrategy?' · '+t.subStrategy.replace('Scalping-',''):''} · Confianza ${t.confidence}%</div>
         </div>`;
       }).join('');
+      todayTrades.slice().reverse().forEach((t,i)=>drawTodayMiniChart(t,i));
+    }
+  }
+
+  async function drawTodayMiniChart(t, idx){
+    const canvas=document.getElementById('todayChart-'+idx);
+    if(!canvas)return;
+    const dprLocal=window.devicePixelRatio||1;
+    const rect=canvas.getBoundingClientRect();
+    const w=rect.width||300, h=60;
+    canvas.width=Math.round(w*dprLocal); canvas.height=Math.round(h*dprLocal);
+    const c2d=canvas.getContext('2d');
+    c2d.setTransform(dprLocal,0,0,dprLocal,0,0);
+    try{
+      const startTime=(t.openTimestamp||Date.now())-8*60*1000;
+      const interval=(t.tf==='5m'||t.tf==='15m')?t.tf:'15m';
+      const res=await fetch(`https://data-api.binance.vision/api/v3/klines?symbol=${t.pair}&interval=${interval}&startTime=${startTime}&limit=30`);
+      const data=await res.json();
+      const closes=data.map(k=>parseFloat(k[4]));
+      const highs=data.map(k=>parseFloat(k[2]));
+      const lows=data.map(k=>parseFloat(k[3]));
+      const opens=data.map(k=>parseFloat(k[1]));
+      if(closes.length===0)throw new Error('sin datos');
+      const allVals=[...highs,...lows,t.tp,t.sl,t.entry];
+      const min=Math.min(...allVals), max=Math.max(...allVals);
+      const range=(max-min)||1, pad=3;
+      const toY=v=>pad+(h-pad*2)-((v-min)/range)*(h-pad*2);
+      const hLine=(v,color)=>{const y=toY(v); c2d.strokeStyle=color; c2d.globalAlpha=.5; c2d.setLineDash([2,3]); c2d.lineWidth=1; c2d.beginPath(); c2d.moveTo(0,y); c2d.lineTo(w,y); c2d.stroke(); c2d.setLineDash([]); c2d.globalAlpha=1;};
+      hLine(t.tp,'#00ff88'); hLine(t.sl,'#ff3355'); hLine(t.entry,'#8888ff');
+      const n=closes.length, slot=w/n, bodyW=Math.max(1,slot*0.6);
+      for(let i=0;i<n;i++){
+        const x=slot*i+slot/2;
+        const up=closes[i]>=opens[i];
+        const color=up?'#00ff88':'#ff3355';
+        c2d.strokeStyle=color; c2d.lineWidth=1;
+        c2d.beginPath(); c2d.moveTo(x,toY(highs[i])); c2d.lineTo(x,toY(lows[i])); c2d.stroke();
+        const yO=toY(opens[i]), yC=toY(closes[i]);
+        c2d.fillStyle=color;
+        c2d.fillRect(x-bodyW/2, Math.min(yO,yC), bodyW, Math.max(1,Math.abs(yC-yO)));
+      }
+    }catch(e){
+      c2d.fillStyle='#333'; c2d.font='9px monospace';
+      c2d.fillText('gráfico no disponible',4,h/2);
     }
   }
 
