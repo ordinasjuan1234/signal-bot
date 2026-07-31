@@ -1310,8 +1310,12 @@ function renderServerState(s){
       const losses=todayTrades.length-wins;
       const totalPnl=todayTrades.reduce((a,t)=>a+t.pnl,0);
       const pnlColor=totalPnl>=0?'#00ff88':'#ff3355';
-      summaryEl.innerHTML=`<span style="color:#8888ff">${todayStr}</span> · ${todayTrades.length} operaciones · ${wins} ganadas / ${losses} perdidas · PnL del día: <span style="color:${pnlColor};font-weight:700">${totalPnl>=0?'+':''}$${totalPnl.toFixed(2)}</span>`;
-      todayListEl.innerHTML=[...todayTrades].reverse().map(t=>{
+      summaryEl.innerHTML=`<span style="color:#8888ff">${todayStr}</span> · ${todayTrades.length} operaciones · ${wins} ganadas / ${losses} perdidas · PnL del día: <span style="color:${pnlColor};font-weight:700">${totalPnl>=0?'+':''}$${totalPnl.toFixed(2)}</span><br><span style="font-size:9px;color:#333">(mostrando las últimas 5 abajo — el CSV tiene todas)</span>`;
+      // Solo mostramos las últimas 5 en pantalla (entra una nueva, sale la
+      // más vieja de la vista) — el resto sigue completo en el resumen de
+      // arriba y en el CSV exportable, esto es solo para no hacer un chorizo
+      // interminable en el panel.
+      todayListEl.innerHTML=[...todayTrades].reverse().slice(0,5).map(t=>{
         const c=t.pnl>=0?'#00ff88':'#ff3355';
         const hora=(t.closeTime.split(', ')[1]||'').slice(0,5);
         return `<div class="trade-item" style="border-color:${c}33;padding:8px">
