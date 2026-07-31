@@ -1315,7 +1315,7 @@ function renderServerState(s){
       // más vieja de la vista) — el resto sigue completo en el resumen de
       // arriba y en el CSV exportable, esto es solo para no hacer un chorizo
       // interminable en el panel.
-      todayListEl.innerHTML=[...todayTrades].reverse().slice(0,5).map(t=>{
+      todayListEl.innerHTML=[...todayTrades].slice(0,5).map(t=>{
         const c=t.pnl>=0?'#00ff88':'#ff3355';
         const hora=(t.closeTime.split(', ')[1]||'').slice(0,5);
         return `<div class="trade-item" style="border-color:${c}33;padding:8px">
