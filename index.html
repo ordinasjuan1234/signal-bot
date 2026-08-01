@@ -1365,7 +1365,7 @@ function renderServerState(s){
   if(!s.trades||s.trades.length===0){
     listEl.innerHTML='Sin operaciones cerradas aún';
   }else{
-    listEl.innerHTML=[...s.trades].reverse().slice(0,10).map(t=>{
+    listEl.innerHTML=[...s.trades].slice(0,10).map(t=>{
       const c=t.pnl>=0?'#00ff88':'#ff3355';
       return `<div class="trade-item" style="border-color:${c}33;padding:8px">
         <div style="display:flex;justify-content:space-between;align-items:center">
