@@ -304,7 +304,7 @@ body.light .tf-btn.active{background:#e4e4ff;border-color:#6666ff;color:#4444dd}
         </div>
         <div style="font-size:9px;color:#333;margin-top:2px">Menos ATR = TP más cerca, se realiza más rápido pero con menos % por trade. Compensá con el tamaño de posición de arriba si querés más $ por operación sin esperar tanto.</div>
       </div>
-      <div style="font-size:9px;color:#333;line-height:1.5">✓ Configuración validada por backtest: BTC+ETH en 4h dieron resultados positivos en 180 días de datos históricos reales.</div>
+      <div style="font-size:9px;color:#333;line-height:1.5">✓ Tendencia/Reversión (BTC+ETH, 4h): positivas en 180 días de backtest histórico. ⚠️ Ese backtest original no descontaba comisión — se agregó recién el 4/8/2026, a confirmar con el número real.<br>⛔ Rebote: PAUSADA (4/8/2026) — backtest de 90 días (264 ops) dio PnL bruto negativo, sin filo real antes de comisión.</div>
     </div>
 
     <div class="card" style="border-color:#ff880033">
@@ -1296,6 +1296,22 @@ function renderServerState(s){
     otEl.style.display='none';
   }
 
+  // Una operación con toma parcial deja DOS filas con el mismo id (parcial +
+  // cierre final) — contarlas sueltas como "ganada"/"perdida" es engañoso.
+  // Agrupa por id y clasifica sobre la SUMA neta real (mismo criterio que
+  // ya usa el backend en summarizeTradesByOutcome).
+  function groupTradesByOutcome(list){
+    const byId={};
+    for(const t of list){
+      const key=t.id||Math.random();
+      if(!byId[key])byId[key]={pnl:0};
+      byId[key].pnl+=t.pnl;
+    }
+    const net=Object.values(byId);
+    const wins=net.filter(n=>n.pnl>=0).length;
+    return {total:net.length,wins,losses:net.length-wins};
+  }
+
   // ── Operaciones de HOY (fecha real del servidor, no solo "últimas 10") ──
   const todayStr=new Date().toLocaleString('es-AR',{timeZone:'America/Argentina/Buenos_Aires'}).split(',')[0];
   const todayTrades=(s.trades||[]).filter(t=>t.closeTime&&t.closeTime.startsWith(todayStr));
@@ -1306,11 +1322,10 @@ function renderServerState(s){
       summaryEl.textContent=`${todayStr} · Sin operaciones cerradas hoy todavía`;
       todayListEl.innerHTML='';
     }else{
-      const wins=todayTrades.filter(t=>t.pnl>=0).length;
-      const losses=todayTrades.length-wins;
+      const {total:netTotal,wins,losses}=groupTradesByOutcome(todayTrades);
       const totalPnl=todayTrades.reduce((a,t)=>a+t.pnl,0);
       const pnlColor=totalPnl>=0?'#00ff88':'#ff3355';
-      summaryEl.innerHTML=`<span style="color:#8888ff">${todayStr}</span> · ${todayTrades.length} operaciones · ${wins} ganadas / ${losses} perdidas · PnL del día: <span style="color:${pnlColor};font-weight:700">${totalPnl>=0?'+':''}$${totalPnl.toFixed(2)}</span><br><span style="font-size:9px;color:#333">(mostrando las últimas 5 abajo — el CSV tiene todas)</span>`;
+      summaryEl.innerHTML=`<span style="color:#8888ff">${todayStr}</span> · ${netTotal} operaciones · ${wins} ganadas / ${losses} perdidas · PnL del día: <span style="color:${pnlColor};font-weight:700">${totalPnl>=0?'+':''}$${totalPnl.toFixed(2)}</span><br><span style="font-size:9px;color:#333">(mostrando las últimas 5 abajo — el CSV tiene todas)</span>`;
       // Solo mostramos las últimas 5 en pantalla (entra una nueva, sale la
       // más vieja de la vista) — el resto sigue completo en el resumen de
       // arriba y en el CSV exportable, esto es solo para no hacer un chorizo
