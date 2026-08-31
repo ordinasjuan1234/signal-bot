@@ -230,6 +230,33 @@ body.light .tf-btn.active{background:#e4e4ff;border-color:#6666ff;color:#4444dd}
       <div id="serverTradesList" style="font-size:10px;color:#444">Cargando...</div>
     </div>
 
+    <div class="card" style="border-color:#8888ff33">
+      <div class="card-label" style="color:#8888ff">✋ OPERACIÓN MANUAL (tu propio TP/SL)</div>
+      <div style="font-size:9px;color:#333;margin-bottom:10px">Abrí una operación con tus propios niveles — usa el mismo capital real del servidor, queda vigilada y te llega por Telegram igual que las automáticas. Sin breakeven ni trailing: tal cual pongas el TP/SL, así queda.</div>
+      <div class="grid2" style="margin-bottom:8px">
+        <select id="manualPair" style="width:100%">
+          <option value="BTCUSDT">BTC/USDT</option>
+          <option value="ETHUSDT">ETH/USDT</option>
+        </select>
+        <div style="display:flex;gap:4px">
+          <button class="tf-btn active" id="manualDirBuyBtn" onclick="setManualDirection('COMPRAR')" style="flex:1">🐂 LARGO</button>
+          <button class="tf-btn" id="manualDirSellBtn" onclick="setManualDirection('VENDER')" style="flex:1">🐻 SHORT</button>
+        </div>
+      </div>
+      <div class="grid2" style="margin-bottom:8px">
+        <div>
+          <div style="font-size:9px;color:#555;margin-bottom:3px">Take Profit</div>
+          <input type="number" id="manualTp" placeholder="Ej: 79500" style="width:100%">
+        </div>
+        <div>
+          <div style="font-size:9px;color:#555;margin-bottom:3px">Stop Loss</div>
+          <input type="number" id="manualSl" placeholder="Ej: 78200" style="width:100%">
+        </div>
+      </div>
+      <button onclick="openManualTrade()" id="manualOpenBtn" class="btn btn-blue" style="width:100%;padding:10px 0;font-size:12px">✋ ABRIR OPERACIÓN MANUAL</button>
+      <div id="manualTradeStatus" style="font-size:9px;margin-top:6px;text-align:center"></div>
+    </div>
+
     <div class="card">
       <div class="card-label">⚙️ CONFIGURACIÓN (se aplica al servidor)</div>
       <div class="grid2" style="margin-bottom:10px">
@@ -304,7 +331,7 @@ body.light .tf-btn.active{background:#e4e4ff;border-color:#6666ff;color:#4444dd}
         </div>
         <div style="font-size:9px;color:#333;margin-top:2px">Menos ATR = TP más cerca, se realiza más rápido pero con menos % por trade. Compensá con el tamaño de posición de arriba si querés más $ por operación sin esperar tanto.</div>
       </div>
-      <div style="font-size:9px;color:#333;line-height:1.5">✓ Tendencia/Reversión (BTC+ETH, 4h): positivas en 180 días de backtest histórico. ⚠️ Ese backtest original no descontaba comisión — se agregó recién el 4/8/2026, a confirmar con el número real.<br>⛔ Rebote: PAUSADA (4/8/2026) — backtest de 90 días (264 ops) dio PnL bruto negativo, sin filo real antes de comisión.</div>
+      <div style="font-size:9px;color:#333;line-height:1.5">⛔ Tendencia: PAUSADA (31/8/2026) — backtest de 60 días en el timeframe real (30m) mostró bruto de apenas +$0.49 en 97 operaciones, sin filo direccional real. No abre operaciones nuevas hasta rediseñar la entrada.<br>⛔ Scalping-Tendencia: PAUSADA (27/8/2026) — sin filo confirmado tras 3 backtests.<br>⛔ Rebote: PAUSADA (4/8/2026) — backtest de 90 días (264 ops) dio PnL bruto negativo, sin filo real antes de comisión.</div>
     </div>
 
     <div class="card" style="border-color:#ff880033">
@@ -677,9 +704,6 @@ function openPaperTrade(forcedSignal){
   const direction = signal==='COMPRAR' ? 'LARGO' : 'SHORT';
   const entry = analysis.price;
   const atr = analysis.atr || entry*0.02;
-  // Si es una dirección forzada (contraria a lo que dice el análisis del
-  // momento), el TP/SL se arma con el mismo ATR pero en el sentido elegido —
-  // es tu criterio de corto plazo, no el algoritmo, el que decide acá.
   const tp = signal==='COMPRAR' ? entry + atr*3 : entry - atr*3;
   const sl = signal==='COMPRAR' ? entry - atr*1.5 : entry + atr*1.5;
   const size=capital*0.95;
@@ -754,9 +778,7 @@ function checkAutoTrade(){
   }
 }
 
-// ── Real Mode API Keys (stored locally, for future backend integration) ──
-// (las claves de Binance ya no se manejan del lado del navegador — ver variables de entorno del servidor)
-
+// ── Real Mode API Keys ──
 let currentTradingMode='demo';
 
 function setTradingMode(btn){
@@ -765,7 +787,6 @@ function setTradingMode(btn){
     executeModeSet(mode);
     return;
   }
-  // Testnet/Real necesitan confirmación explícita si todavía no se dio
   document.getElementById('confirmRiskBox').dataset.pendingMode=mode;
   executeModeSet(mode);
 }
@@ -847,7 +868,7 @@ async function resetKillSwitch(){
 }
 
 // ── Server config UI helpers (pair/TF selectors -> server config) ──
-let lastConfigEditTime = 0; // evita que un refresco automático pise un cambio que acabás de hacer
+let lastConfigEditTime = 0;
 
 function toggleAutoPair(btn){
   lastConfigEditTime = Date.now();
@@ -892,6 +913,50 @@ function setTpMult(btn){
   btn.classList.add('active');
   tpAtrMultiplier=parseFloat(btn.dataset.mult);
   updateServerConfig();
+}
+
+// ── Manual trade UI (31/8/2026) ─────────────────────────────
+let manualDirection = 'COMPRAR';
+function setManualDirection(dir){
+  manualDirection = dir;
+  document.getElementById('manualDirBuyBtn').classList.toggle('active', dir==='COMPRAR');
+  document.getElementById('manualDirSellBtn').classList.toggle('active', dir==='VENDER');
+}
+async function openManualTrade(){
+  const pairSel = document.getElementById('manualPair').value;
+  const tp = parseFloat(document.getElementById('manualTp').value);
+  const sl = parseFloat(document.getElementById('manualSl').value);
+  const statusEl = document.getElementById('manualTradeStatus');
+  if(!tp || !sl){
+    statusEl.textContent = 'Completá TP y SL';
+    statusEl.style.color = '#ff3355';
+    return;
+  }
+  if(!confirm(`¿Abrir ${manualDirection} en ${pairSel.replace('USDT','/USDT')} con TP $${tp} y SL $${sl}, usando capital real del servidor?`)) return;
+  const btn = document.getElementById('manualOpenBtn');
+  btn.disabled = true; btn.textContent = 'Abriendo...';
+  statusEl.textContent = '';
+  try{
+    const res = await fetch(BACKEND_URL+'/state/open-manual-trade', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ pair: pairSel, signal: manualDirection, tp, sl })
+    });
+    const data = await res.json();
+    if(data.error){
+      statusEl.textContent = '✗ ' + data.error;
+      statusEl.style.color = '#ff3355';
+    } else {
+      statusEl.textContent = `✓ Abierta a $${data.trade.entry.toFixed(2)}`;
+      statusEl.style.color = '#00ff88';
+      document.getElementById('manualTp').value = '';
+      document.getElementById('manualSl').value = '';
+      await fetchServerState();
+    }
+  }catch(e){
+    statusEl.textContent = '✗ Error de conexión: ' + e.message;
+    statusEl.style.color = '#ff3355';
+  }
+  btn.disabled = false; btn.textContent = '✋ ABRIR OPERACIÓN MANUAL';
 }
 
 // ── Risk Calculator ───────────────────────────────────────
@@ -960,8 +1025,6 @@ function exportTrades(){
 // ── Server-backed AUTO (backend real 24/7) ────────────────
 let serverPollInterval=null;
 
-// ADX en vivo, calculado del lado del navegador con los mismos datos del
-// gráfico, para ver en tiempo real si el mercado está lateral o en tendencia.
 function calcADXClient(highs,lows,closes,period=14){
   const n=highs.length;
   if(n<period*2+1)return null;
@@ -988,15 +1051,13 @@ function calcADXClient(highs,lows,closes,period=14){
   return adx;
 }
 
-const chartDrawGen={}; // controla que solo se dibuje el resultado más reciente por par, descartando llamadas atrasadas
+const chartDrawGen={};
 
 async function drawTradeChart(t){
   const canvas=document.getElementById('chart-'+t.pair);
   if(!canvas)return;
   const myGen=(chartDrawGen[t.pair]=(chartDrawGen[t.pair]||0)+1);
   const ctx=canvas.getContext('2d');
-  // Ajuste de alta resolución: sin esto, en pantallas retina/celulares el
-  // gráfico se dibuja "chico" y se estira, quedando pixelado.
   const dpr=window.devicePixelRatio||1;
   const rect=canvas.getBoundingClientRect();
   const w=rect.width||300, h=rect.height||70;
@@ -1007,7 +1068,7 @@ async function drawTradeChart(t){
   try{
     const res=await fetch(`https://data-api.binance.vision/api/v3/klines?symbol=${t.pair}&interval=${t.tf}&limit=50`);
     const data=await res.json();
-    if(chartDrawGen[t.pair]!==myGen)return; // llegó atrasado, ya hay un dibujo más nuevo — no pisarlo
+    if(chartDrawGen[t.pair]!==myGen)return;
     const opens=data.map(k=>parseFloat(k[1]));
     const highs=data.map(k=>parseFloat(k[2]));
     const lows=data.map(k=>parseFloat(k[3]));
@@ -1017,8 +1078,6 @@ async function drawTradeChart(t){
     const slVal=typeof t.sl==='number'?t.sl:parseFloat(t.sl);
     const entryVal=typeof t.entry==='number'?t.entry:parseFloat(t.entry);
 
-    // Rango de las últimas 15 velas — el mismo que usa la estrategia "Rango"
-    // del backend para decidir si opera el rebote piso/techo.
     const rangeHighs=highs.slice(-15), rangeLows=lows.slice(-15);
     const rangeTop=Math.max(...rangeHighs), rangeBottom=Math.min(...rangeLows);
     const adxLive=calcADXClient(highs,lows,closes);
@@ -1035,14 +1094,12 @@ async function drawTradeChart(t){
       ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();
       ctx.setLineDash([]);
     }
-    // Rango (piso/techo) primero, más finito y punteado distinto, atrás de todo
     hLine(rangeTop,'#ffaa0088',[2,4]);
     hLine(rangeBottom,'#ffaa0088',[2,4]);
     hLine(tpVal,'#00ff88');
     hLine(slVal,'#ff3355');
     hLine(entryVal,'#6666ff');
 
-    // Texto de ADX en vivo, arriba a la izquierda del gráfico
     if(adxLive!==null){
       ctx.font='9px monospace';
       ctx.fillStyle=adxLive<20?'#ffaa00':'#8888ff';
@@ -1052,7 +1109,6 @@ async function drawTradeChart(t){
     const current=closes[closes.length-1];
     const inProfit = t.signal==='COMPRAR' ? current>entryVal : current<entryVal;
 
-    // Precio actual del activo en vivo, con la variación % desde la entrada
     const priceEl=document.getElementById('price-'+t.pair);
     if(priceEl){
       const changeFromEntryPct=((current-entryVal)/entryVal)*100;
@@ -1061,12 +1117,11 @@ async function drawTradeChart(t){
       priceEl.textContent=`$${current.toFixed(current<10?4:2)} (${changeFromEntryPct>=0?'+':''}${changeFromEntryPct.toFixed(2)}% desde entrada)`;
     }
 
-    // PnL no realizado (neto de comisión simulada), misma fórmula que usa el backend al cerrar de verdad
     const pnlEl=document.getElementById('pnl-'+t.pair);
     if(pnlEl){
       const pricePct = t.signal==='COMPRAR' ? (current-entryVal)/entryVal : (entryVal-current)/entryVal;
       const size=t.size||200;
-      const commission=size*0.001*2; // 0.1% por lado, ida y vuelta
+      const commission=size*0.001*2;
       const pnl=(size*pricePct)-commission;
       const pnlPct=(pnl/size)*100;
       const color=pnl>=0?'#00ff88':'#ff3355';
@@ -1074,7 +1129,6 @@ async function drawTradeChart(t){
       pnlEl.textContent=`${pnl>=0?'+':''}$${pnl.toFixed(2)} (${pnl>=0?'+':''}${pnlPct.toFixed(2)}%) neto`;
     }
 
-    // Velas japonesas reales (cuerpo + mecha), en vez de una simple línea
     const n=closes.length;
     const slot=w/n;
     const bodyWidth=Math.max(1,slot*0.6);
@@ -1084,12 +1138,10 @@ async function drawTradeChart(t){
       const color=isUp?'#00ff88':'#ff3355';
       ctx.strokeStyle=color;
       ctx.lineWidth=1;
-      // mecha (high-low)
       ctx.beginPath();
       ctx.moveTo(x,toY(highs[i]));
       ctx.lineTo(x,toY(lows[i]));
       ctx.stroke();
-      // cuerpo (open-close)
       const yOpen=toY(opens[i]), yClose=toY(closes[i]);
       const bodyTop=Math.min(yOpen,yClose);
       const bodyH=Math.max(1,Math.abs(yClose-yOpen));
@@ -1097,13 +1149,12 @@ async function drawTradeChart(t){
       ctx.fillRect(x-bodyWidth/2,bodyTop,bodyWidth,bodyH);
     }
 
-    // punto del precio actual
     ctx.fillStyle=inProfit?'#00ff88':'#ff3355';
     ctx.beginPath();
     ctx.arc(w-2,toY(current),3,0,Math.PI*2);
     ctx.fill();
   }catch(e){
-    if(chartDrawGen[t.pair]!==myGen)return; // atrasado, no pisar un dibujo más nuevo con un error viejo
+    if(chartDrawGen[t.pair]!==myGen)return;
     ctx.fillStyle='#444';ctx.font='10px monospace';
     ctx.fillText('Gráfico no disponible',8,h/2);
     const pnlEl=document.getElementById('pnl-'+t.pair);
@@ -1117,7 +1168,6 @@ async function drawTradeChart(t){
 async function updateEffectivenessGrid(){
   const grid=document.getElementById('effectivenessGrid');
   if(!grid)return;
-  // Manual local (demo, guardado en cookies del navegador)
   const manualTotal=trades.length;
   const manualWins=trades.filter(t=>t.pnl>=0).length;
   const manualWinRate=manualTotal>0?((manualWins/manualTotal)*100).toFixed(1):'0.0';
@@ -1161,7 +1211,7 @@ async function fetchServerState(){
 async function exportServerTrades(){
   const s=await fetchServerState();
   if(!s||!s.trades||s.trades.length===0){alert('No hay operaciones cerradas del servidor todavía.');return;}
-  const q=v=>`"${String(v).replace(/"/g,'""')}"`; // envuelve cada valor en comillas, así una coma adentro (como en las fechas) no rompe las columnas
+  const q=v=>`"${String(v).replace(/"/g,'""')}"`;
   const headers=['Par','Señal','TF','Entrada','Salida','PnL Neto','PnL Neto %','PnL Bruto','Comisión','Razón','Apertura','Cierre','Confianza','Estrategia'];
   const csv=headers.map(q).join(',')+'\n'+
     s.trades.map(t=>[t.pair,t.signal,t.tf||'?',t.entry,t.exitPrice,t.pnl.toFixed(2),t.pnlPct.toFixed(2),(t.pnlBeforeFees!==undefined?t.pnlBeforeFees.toFixed(2):t.pnl.toFixed(2)),(t.commission!==undefined?t.commission.toFixed(2):'0.00'),t.reason,t.openTime,t.closeTime,t.confidence,t.strategy||'Reversión (histórico)'].map(q).join(',')).join('\n');
@@ -1272,7 +1322,7 @@ function renderServerState(s){
   }
 
   const otEl=document.getElementById('serverOpenTrade');
-  const openTrades=s.openTrades||(s.openTrade?[s.openTrade]:[]); // compat por si el backend viejo aún manda singular
+  const openTrades=s.openTrades||(s.openTrade?[s.openTrade]:[]);
   if(openTrades.length>0){
     otEl.style.display='block';
     otEl.innerHTML=openTrades.map(t=>`<div class="mini-card" style="text-align:left;padding:8px;margin-bottom:6px">
@@ -1296,10 +1346,6 @@ function renderServerState(s){
     otEl.style.display='none';
   }
 
-  // Una operación con toma parcial deja DOS filas con el mismo id (parcial +
-  // cierre final) — contarlas sueltas como "ganada"/"perdida" es engañoso.
-  // Agrupa por id y clasifica sobre la SUMA neta real (mismo criterio que
-  // ya usa el backend en summarizeTradesByOutcome).
   function groupTradesByOutcome(list){
     const byId={};
     for(const t of list){
@@ -1312,7 +1358,6 @@ function renderServerState(s){
     return {total:net.length,wins,losses:net.length-wins};
   }
 
-  // ── Operaciones de HOY (fecha real del servidor, no solo "últimas 10") ──
   const todayStr=new Date().toLocaleString('es-AR',{timeZone:'America/Argentina/Buenos_Aires'}).split(',')[0];
   const todayTrades=(s.trades||[]).filter(t=>t.closeTime&&t.closeTime.startsWith(todayStr));
   const summaryEl=document.getElementById('todaySummary');
@@ -1326,10 +1371,6 @@ function renderServerState(s){
       const totalPnl=todayTrades.reduce((a,t)=>a+t.pnl,0);
       const pnlColor=totalPnl>=0?'#00ff88':'#ff3355';
       summaryEl.innerHTML=`<span style="color:#8888ff">${todayStr}</span> · ${netTotal} operaciones · ${wins} ganadas / ${losses} perdidas · PnL del día: <span style="color:${pnlColor};font-weight:700">${totalPnl>=0?'+':''}$${totalPnl.toFixed(2)}</span><br><span style="font-size:9px;color:#333">(mostrando las últimas 5 abajo — el CSV tiene todas)</span>`;
-      // Solo mostramos las últimas 5 en pantalla (entra una nueva, sale la
-      // más vieja de la vista) — el resto sigue completo en el resumen de
-      // arriba y en el CSV exportable, esto es solo para no hacer un chorizo
-      // interminable en el panel.
       todayListEl.innerHTML=[...todayTrades].slice(0,5).map(t=>{
         const c=t.pnl>=0?'#00ff88':'#ff3355';
         const hora=(t.closeTime.split(', ')[1]||'').slice(0,5);
@@ -1349,7 +1390,6 @@ function renderServerState(s){
     }
   }
 
-  // ── Seguimiento fantasma: ¿el Sub-SL ayuda o perjudica? ──
   const ghostSummaryEl=document.getElementById('ghostSummary');
   const ghostListEl=document.getElementById('ghostList');
   if(ghostSummaryEl&&ghostListEl){
